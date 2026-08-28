@@ -38,8 +38,9 @@ when you add its key, and has a working local fallback until you do.
 ## Deploying to Vercel
 
 1. Create a Postgres database (Vercel Postgres, Neon and Supabase all work).
-   Set `DATABASE_URL` to the pooled URL and `DIRECT_DATABASE_URL` to the direct
-   one — Prisma migrations need an unpooled connection.
+   Set `DATABASE_URL` to the application URL and `POSTGRES_URL` to the direct
+   URL for the same database. The Prisma Postgres Vercel integration provides
+   both variables automatically.
 2. Set `NEXT_PUBLIC_APP_URL` to your domain and `CRON_SECRET` to a random string.
 3. Deploy. The build script runs `prisma generate`, applies all pending
    migrations with `prisma migrate deploy`, and then runs `next build`.
