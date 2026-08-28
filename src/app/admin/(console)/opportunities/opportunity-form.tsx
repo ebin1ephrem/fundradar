@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useActionState, useState } from "react";
-import type { Opportunity } from "@prisma/client";
+import type { OpportunityFormValues } from "@/lib/admin/opportunity-form-values";
 import { Field, Fieldset, FormError, Row } from "@/components/ui/form";
 import { SubmitButton } from "@/components/ui/submit-button";
 import {
@@ -20,14 +20,6 @@ import type { OpportunityFormState } from "./actions";
 
 const CURRENCIES = ["INR", "USD", "EUR", "GBP", "SGD", "AED", "AUD", "CHF", "JPY"];
 
-function dateValue(d: Date | null | undefined) {
-  return d ? new Date(d).toISOString().slice(0, 10) : "";
-}
-
-function triValue(v: boolean | null | undefined) {
-  return v === null || v === undefined ? "unknown" : v ? "yes" : "no";
-}
-
 export function OpportunityForm({
   action,
   opportunity,
@@ -39,7 +31,7 @@ export function OpportunityForm({
     state: OpportunityFormState,
     formData: FormData,
   ) => Promise<OpportunityFormState>;
-  opportunity?: Opportunity;
+  opportunity?: OpportunityFormValues;
   categories: PickerCategory[];
   selectedCategoryIds: string[];
   primaryCategoryId: string | null;
@@ -198,7 +190,7 @@ export function OpportunityForm({
               name="fundingMin"
               inputMode="numeric"
               className="field"
-              defaultValue={opportunity?.fundingMin?.toString() ?? ""}
+              defaultValue={opportunity?.fundingMin ?? ""}
               placeholder="500000"
             />
           </Field>
@@ -208,7 +200,7 @@ export function OpportunityForm({
               name="fundingMax"
               inputMode="numeric"
               className="field"
-              defaultValue={opportunity?.fundingMax?.toString() ?? ""}
+              defaultValue={opportunity?.fundingMax ?? ""}
               placeholder="5000000"
             />
           </Field>
@@ -244,7 +236,7 @@ export function OpportunityForm({
         <TriState
           name="isEquityFree"
           label="Equity-free"
-          defaultValue={triValue(opportunity?.isEquityFree)}
+          defaultValue={opportunity?.isEquityFree ?? "unknown"}
         />
 
         <Field label="Funding types" hint="Tick everything that applies.">
@@ -283,7 +275,7 @@ export function OpportunityForm({
               type="date"
               className="field"
               disabled={rolling}
-              defaultValue={dateValue(opportunity?.applicationDeadline)}
+              defaultValue={opportunity?.applicationDeadline ?? ""}
             />
           </Field>
           <Field label="Rolling deadline">
@@ -311,7 +303,7 @@ export function OpportunityForm({
               name="applicationOpenDate"
               type="date"
               className="field"
-              defaultValue={dateValue(opportunity?.applicationOpenDate)}
+              defaultValue={opportunity?.applicationOpenDate ?? ""}
             />
           </Field>
           <Field label="Programme starts" htmlFor="programmeStartDate">
@@ -320,7 +312,7 @@ export function OpportunityForm({
               name="programmeStartDate"
               type="date"
               className="field"
-              defaultValue={dateValue(opportunity?.programmeStartDate)}
+              defaultValue={opportunity?.programmeStartDate ?? ""}
             />
           </Field>
           <Field label="Programme ends" htmlFor="programmeEndDate">
@@ -329,7 +321,7 @@ export function OpportunityForm({
               name="programmeEndDate"
               type="date"
               className="field"
-              defaultValue={dateValue(opportunity?.programmeEndDate)}
+              defaultValue={opportunity?.programmeEndDate ?? ""}
             />
           </Field>
         </Row>
@@ -430,7 +422,7 @@ export function OpportunityForm({
               id="companyTypes"
               name="companyTypes"
               className="field"
-              defaultValue={opportunity?.companyTypes?.join(", ") ?? ""}
+              defaultValue={opportunity?.companyTypes ?? ""}
             />
           </Field>
           <Field
@@ -442,7 +434,7 @@ export function OpportunityForm({
               id="technologies"
               name="technologies"
               className="field"
-              defaultValue={opportunity?.technologies?.join(", ") ?? ""}
+              defaultValue={opportunity?.technologies ?? ""}
             />
           </Field>
         </Row>
@@ -451,22 +443,22 @@ export function OpportunityForm({
           <TriState
             name="requiresDpiit"
             label="DPIIT recognition required"
-            defaultValue={triValue(opportunity?.requiresDpiit)}
+            defaultValue={opportunity?.requiresDpiit ?? "unknown"}
           />
           <TriState
             name="requiresMsmeUdyam"
             label="MSME / Udyam registration required"
-            defaultValue={triValue(opportunity?.requiresMsmeUdyam)}
+            defaultValue={opportunity?.requiresMsmeUdyam ?? "unknown"}
           />
           <TriState
             name="requiresStudentFounder"
             label="Student founder required"
-            defaultValue={triValue(opportunity?.requiresStudentFounder)}
+            defaultValue={opportunity?.requiresStudentFounder ?? "unknown"}
           />
           <TriState
             name="requiresWomenFounder"
             label="Women founder required"
-            defaultValue={triValue(opportunity?.requiresWomenFounder)}
+            defaultValue={opportunity?.requiresWomenFounder ?? "unknown"}
           />
         </div>
 
@@ -543,9 +535,7 @@ export function OpportunityForm({
               <input
                 type="checkbox"
                 name={benefit.name}
-                defaultChecked={
-                  (opportunity?.[benefit.name] as boolean | undefined) ?? false
-                }
+                defaultChecked={opportunity?.benefits[benefit.name] ?? false}
                 className="size-3.5 accent-ink"
               />
               {benefit.label}
@@ -570,10 +560,16 @@ export function OpportunityForm({
             />
           </Field>
           <Field label="Contact email" htmlFor="contactEmail" error={err.contactEmail}>
+            {/*
+              Deliberately not type="email". The browser silently refuses to
+              submit an invalid value, which locked admins out of saving a draft
+              whenever extraction produced a malformed address. The schema
+              validates it and shows a message they can act on.
+            */}
             <input
               id="contactEmail"
               name="contactEmail"
-              type="email"
+              inputMode="email"
               className="field"
               defaultValue={opportunity?.contactEmail ?? ""}
             />
@@ -643,15 +639,13 @@ export function OpportunityForm({
         <Field
           label="Official source URL"
           htmlFor="officialSourceUrl"
-          required
           error={err.officialSourceUrl}
-          hint="The provider's own page for this programme."
+          hint="The provider's own page. A draft can be saved without it; publishing cannot."
         >
           <input
             id="officialSourceUrl"
             name="officialSourceUrl"
             className="field"
-            required
             defaultValue={opportunity?.officialSourceUrl ?? ""}
             placeholder="https://…"
           />

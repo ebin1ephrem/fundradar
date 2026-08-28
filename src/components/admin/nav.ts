@@ -4,8 +4,8 @@ export type NavItem = {
   href: string;
   label: string;
   icon: string;
-  /** Badge counter key resolved by the shell (e.g. pending review count). */
-  badge?: "reviewQueue";
+  /** Badge counter key resolved by the shell. */
+  badge?: "reviewQueue" | "inbox" | "duplicates" | "updates";
   superAdminOnly?: boolean;
 };
 
@@ -24,7 +24,21 @@ export const NAV: NavSection[] = [
     title: "Funding database",
     items: [
       { href: "/admin/opportunities", label: "Opportunities", icon: "Banknote" },
-      { href: "/admin/categories", label: "Categories", icon: "Tags" },
+      { href: "/admin/categories", label: "Categories", icon: "Layers" },
+    ],
+  },
+  {
+    title: "Collection",
+    items: [
+      {
+        href: "/admin/review",
+        label: "Review queue",
+        icon: "ClipboardList",
+        badge: "reviewQueue",
+      },
+      { href: "/admin/inbox", label: "Collection inbox", icon: "Package", badge: "inbox" },
+      { href: "/admin/sources", label: "Sources", icon: "Globe" },
+      { href: "/admin/jobs", label: "Crawl jobs", icon: "Bot" },
     ],
   },
   {

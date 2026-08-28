@@ -129,12 +129,14 @@ export const OpportunityInput = z
     applicationUrl: nullableUrl,
     applicationInstructions: nullableText,
     contactEmail: nullableEmail,
-    officialSourceUrl: trimmed
-      .min(1, "An official source URL is required")
-      .refine(
-        (v) => /^https?:\/\/\S+\.\S+/i.test(v),
-        "Enter a full URL starting with http:// or https://",
-      ),
+    // Empty is allowed while a record is a draft — an extracted opportunity may
+    // genuinely arrive without one, and inventing a URL to satisfy a form is
+    // exactly the wrong behaviour. publishRequirements() blocks publication
+    // until a real source is present.
+    officialSourceUrl: trimmed.refine(
+      (v) => v === "" || /^https?:\/\/\S+\.\S+/i.test(v),
+      "Enter a full URL starting with http:// or https://",
+    ),
 
     seoTitle: nullableText,
     seoDescription: nullableText,

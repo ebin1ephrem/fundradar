@@ -51,7 +51,10 @@ export function FormError({ message }: { message?: string | null }) {
 export function FormNotice({ message }: { message?: string | null }) {
   if (!message) return null;
   return (
-    <div className="rounded-[8px] border border-line bg-subtle px-3.5 py-2.5 text-[13.5px] text-body">
+    <div
+      role="status"
+      className="rounded-[8px] border border-line bg-subtle px-3.5 py-2.5 text-[13.5px] text-body"
+    >
       {message}
     </div>
   );

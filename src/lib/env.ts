@@ -13,7 +13,7 @@ export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
 
   anthropicApiKey: opt("ANTHROPIC_API_KEY"),
-  anthropicModel: opt("ANTHROPIC_MODEL") ?? "claude-sonnet-5",
+  anthropicModel: opt("ANTHROPIC_MODEL") ?? "claude-opus-5",
 
   resendApiKey: opt("RESEND_API_KEY"),
   emailFrom: opt("EMAIL_FROM") ?? "FundRadar <onboarding@resend.dev>",
@@ -28,6 +28,14 @@ export const env = {
   crawlerUserAgent:
     opt("CRAWLER_USER_AGENT") ??
     "FundRadarBot/1.0 (+https://fundradar.example/bot; startup funding directory)",
+
+  /**
+   * Lets the crawler reach localhost, for testing against a local fixture site.
+   * Ignored in production: a deployed crawler must never be able to reach
+   * inside the network it runs in.
+   */
+  allowPrivateCrawlTargets:
+    process.env.NODE_ENV !== "production" && opt("CRAWLER_ALLOW_PRIVATE") === "1",
 } as const;
 
 export const has = {

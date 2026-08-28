@@ -16,7 +16,7 @@ export function AdminShell({
 }: {
   sections: NavSection[];
   admin: { name: string; email: string; role: string };
-  badges: Partial<Record<"reviewQueue", number>>;
+  badges: Partial<Record<"reviewQueue" | "inbox" | "duplicates" | "updates", number>>;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();

@@ -15,15 +15,19 @@ export default async function ConsoleLayout({
   const admin = await getAdmin();
   if (!admin) redirect("/admin/login");
 
-  const reviewQueue = await prisma.reviewItem.count({
-    where: { status: { in: ["UNASSIGNED", "ASSIGNED", "UNDER_REVIEW", "READY_FOR_APPROVAL"] } },
-  });
+  const OPEN = ["UNASSIGNED", "ASSIGNED", "UNDER_REVIEW", "READY_FOR_APPROVAL"] as const;
+  const [reviewQueue, inbox] = await Promise.all([
+    prisma.reviewItem.count({ where: { status: { in: [...OPEN] } } }),
+    prisma.collectionItem.count({
+      where: { status: { in: ["NEW", "EXTRACTED", "FAILED"] }, opportunityId: null },
+    }),
+  ]);
 
   return (
     <AdminShell
       sections={visibleNav(admin.role)}
       admin={{ name: admin.name, email: admin.email, role: admin.role }}
-      badges={{ reviewQueue }}
+      badges={{ reviewQueue, inbox }}
     >
       {children}
     </AdminShell>

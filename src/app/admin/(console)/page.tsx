@@ -48,7 +48,12 @@ export default async function AdminDashboard() {
     prisma.source.count({ where: { enabled: true } }),
     prisma.crawlJob.count({ where: { status: { in: ["QUEUED", "RUNNING"] } } }),
     prisma.source.count({ where: { health: { in: ["ERROR", "BLOCKED"] } } }),
-    prisma.reviewItem.count({ where: { type: "UPDATE", status: { not: "APPROVED" } } }),
+    prisma.reviewItem.count({
+      where: {
+        type: "UPDATE",
+        status: { in: ["UNASSIGNED", "ASSIGNED", "UNDER_REVIEW", "READY_FOR_APPROVAL"] },
+      },
+    }),
     prisma.reviewItem.count({
       where: { status: { in: ["UNASSIGNED", "ASSIGNED", "UNDER_REVIEW", "READY_FOR_APPROVAL"] } },
     }),
@@ -114,11 +119,39 @@ export default async function AdminDashboard() {
         <section className="mt-9">
           <h2 className="eyebrow mb-3">Collection pipeline</h2>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-            <StatTile label="Sources monitored" value={sourcesMonitored} hint="Enabled sources" />
-            <StatTile label="Crawler jobs" value={crawlerJobs} hint="Queued or running" />
-            <StatTile label="Source errors" value={crawlerErrors} hint="Error or blocked" emphasis />
-            <StatTile label="Updates detected" value={updatesDetected} hint="Awaiting approval" emphasis />
-            <StatTile label="Pending reviews" value={pendingReviews} hint="In the review queue" emphasis />
+            <StatTile
+              label="Sources monitored"
+              value={sourcesMonitored}
+              hint="Enabled sources"
+              href="/admin/sources"
+            />
+            <StatTile
+              label="Crawler jobs"
+              value={crawlerJobs}
+              hint="Queued or running"
+              href="/admin/jobs"
+            />
+            <StatTile
+              label="Source errors"
+              value={crawlerErrors}
+              hint="Error or blocked"
+              href="/admin/sources"
+              emphasis
+            />
+            <StatTile
+              label="Updates detected"
+              value={updatesDetected}
+              hint="Awaiting approval"
+              href="/admin/review?tab=updates"
+              emphasis
+            />
+            <StatTile
+              label="Pending reviews"
+              value={pendingReviews}
+              hint="In the review queue"
+              href="/admin/review"
+              emphasis
+            />
           </div>
           <p className="hint mt-3">
             Collection, extraction and change detection are automatic. Publishing

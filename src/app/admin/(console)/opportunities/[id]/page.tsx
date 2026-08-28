@@ -7,6 +7,7 @@ import { PageBody, PageHeader } from "@/components/admin/page-header";
 import { WorkflowBadge, LifecycleBadge } from "@/components/admin/status-badge";
 import { FormError, FormNotice } from "@/components/ui/form";
 import { pickerCategories } from "@/lib/queries/categories";
+import { toFormValues } from "@/lib/admin/opportunity-form-values";
 import { publishRequirements } from "@/lib/publishing";
 import { lifecycleStatus } from "@/lib/opportunity-status";
 import { cn, formatDate } from "@/lib/utils";
@@ -103,7 +104,7 @@ export default async function EditOpportunityPage({
         <div className="grid gap-8 xl:grid-cols-[1fr_300px]">
           <OpportunityForm
             action={saveOpportunityAction}
-            opportunity={opportunity}
+            opportunity={toFormValues(opportunity)}
             categories={categories}
             selectedCategoryIds={selectedIds}
             primaryCategoryId={primaryId}

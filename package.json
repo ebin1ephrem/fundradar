@@ -16,7 +16,9 @@
     "check:search": "tsx --tsconfig tsconfig.scripts.json tests/search.check.ts",
     "db:fixtures": "tsx prisma/dev-fixtures.ts",
     "smoke:public": "node tests/phase2.smoke.mjs",
-    "smoke:leads": "node tests/phase3.smoke.mjs"
+    "smoke:leads": "node tests/phase3.smoke.mjs",
+    "check:ingestion": "tsx --tsconfig tsconfig.scripts.json tests/ingestion.check.ts",
+    "check:crawler": "tsx --tsconfig tsconfig.scripts.json tests/crawler.check.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",

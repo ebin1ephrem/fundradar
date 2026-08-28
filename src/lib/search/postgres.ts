@@ -1,6 +1,7 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_WORKFLOW_STATUSES } from "@/lib/visibility";
 import { parseQuery, type ParsedQuery } from "./query";
 import type {
   OpportunityFilters,
@@ -100,7 +101,9 @@ type RawRow = Omit<SearchHit, "categories" | "fundingMin" | "fundingMax"> & {
 
 async function buildWhere(filters: OpportunityFilters): Promise<Prisma.Sql> {
   const clauses: Prisma.Sql[] = [
-    Prisma.sql`o."workflowStatus" = 'PUBLISHED'`,
+    Prisma.sql`o."workflowStatus" = ANY(ARRAY[${Prisma.join(
+      PUBLIC_WORKFLOW_STATUSES,
+    )}]::"WorkflowStatus"[])`,
     Prisma.sql`o."isActive" = true`,
   ];
 

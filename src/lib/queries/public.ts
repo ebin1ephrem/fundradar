@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { publiclyVisible } from "@/lib/visibility";
 import type { FilterCategory } from "@/components/public/filter-panel";
 
 /** Top-level categories used to build the filter sidebar. */
@@ -20,7 +21,7 @@ export async function filterCategories(): Promise<FilterCategory[]> {
 /** Only states that actually have published opportunities. */
 export async function statesWithOpportunities(): Promise<string[]> {
   const rows = await prisma.opportunity.findMany({
-    where: { workflowStatus: "PUBLISHED", isActive: true, state: { not: null } },
+    where: { ...publiclyVisible, state: { not: null } },
     distinct: ["state"],
     select: { state: true },
     orderBy: { state: "asc" },

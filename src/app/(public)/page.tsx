@@ -4,6 +4,7 @@ import { ArrowRight, ArrowUpRight, ShieldCheck, Timer, Waypoints } from "lucide-
 import { search } from "@/lib/search";
 import { homepageCategories } from "@/lib/queries/public";
 import { prisma } from "@/lib/prisma";
+import { publiclyVisible } from "@/lib/visibility";
 import { OpportunityCard } from "@/components/public/opportunity-card";
 import { SearchBar } from "@/components/public/search-bar";
 import { Icon } from "@/components/admin/icon";
@@ -37,7 +38,7 @@ export default async function HomePage() {
   );
   const providerCount = await prisma.opportunity
     .findMany({
-      where: { workflowStatus: "PUBLISHED", isActive: true },
+      where: publiclyVisible,
       distinct: ["providerName"],
       select: { providerName: true },
     })

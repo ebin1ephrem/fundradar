@@ -159,15 +159,63 @@ enum SourceHealth {
 }
 
 enum CollectionClassification {
-  LIKELY_GRANT
+  GRANT
+  SEED_FUND
+  INCUBATION_PROGRAM
+  ACCELERATION_PROGRAM
+  CSR_FUNDING
+  CORPORATE_INNOVATION
+  AWARD_OR_COMPETITION
+  FELLOWSHIP
+  PILOT_OPPORTUNITY
+  MARKET_ACCESS
+  PROCUREMENT_OPPORTUNITY
   POSSIBLE_FUNDING_OPPORTUNITY
   EVENT
-  ACCELERATOR
-  COMPETITION
-  ARTICLE
-  NEWS
-  IRRELEVANT
+  NEWS_OR_ARTICLE
+  GENERAL_INFORMATION
+  NOT_AN_OPPORTUNITY
   UNKNOWN
+}
+
+/// How a record entered the platform. Every route lands in the same pipeline.
+enum IngestionMethod {
+  MANUAL_ENTRY
+  PASTED_TEXT
+  MANUAL_URL
+  CRAWLER
+  CSV_IMPORT
+}
+
+enum ExtractionInputType {
+  URL
+  CRAWLED_PAGE
+  PASTED_TEXT
+  PDF_TEXT
+  MANUAL_REEXTRACTION
+}
+
+enum ExtractionStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+enum SuggestionStatus {
+  SUGGESTED
+  ACCEPTED
+  REJECTED
+}
+
+enum DuplicateStatus {
+  OPEN
+  KEPT_EXISTING
+  UPDATED_EXISTING
+  MERGED
+  NEW_COHORT
+  KEPT_BOTH
+  REJECTED
 }
 
 enum CollectionStatus {
@@ -226,6 +274,7 @@ enum JobStatus {
   QUEUED
   RUNNING
   SUCCEEDED
+  PARTIAL
   FAILED
   CANCELLED
 }
@@ -276,6 +325,7 @@ model Category {
   children Category[] @relation("CategoryTree")
 
   opportunities   OpportunityCategory[]
+  suggestions     CategorySuggestion[]
   leadInterests   LeadCategoryInterest[]
   alertCategories AlertSubscriptionCategory[]
   sources         Source[]
@@ -393,6 +443,7 @@ model Opportunity {
   sourceConfidence     Float?
   fieldConfidence      Json?
 
+  ingestionMethod    IngestionMethod    @default(MANUAL_ENTRY)
   workflowStatus     WorkflowStatus     @default(DRAFT)
   verificationStatus VerificationStatus @default(UNVERIFIED)
   lifecycleOverride  LifecycleStatus?
@@ -427,15 +478,19 @@ model Opportunity {
   publishedBy AdminUser? @relation("OpportunityPublishedBy", fields: [publishedById], references: [id], onDelete: SetNull)
   createdBy   AdminUser? @relation("OpportunityCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
 
-  categories      OpportunityCategory[]
-  versions        OpportunityVersion[]
-  reviewItems     ReviewItem[]
-  duplicateOf     ReviewItem[]          @relation("ReviewDuplicateTarget")
-  savedBy         SavedOpportunity[]
-  activities      LeadActivity[]
-  errorReports    ErrorReport[]
-  collectionItems CollectionItem[]
-  analyticsEvents AnalyticsEvent[]
+  categories          OpportunityCategory[]
+  versions            OpportunityVersion[]
+  reviewItems         ReviewItem[]
+  extractionRuns      ExtractionRun[]
+  categorySuggestions CategorySuggestion[]
+  duplicatesFound     DuplicateCandidate[]  @relation("DuplicateNew")
+  duplicatesAgainst   DuplicateCandidate[]  @relation("DuplicateExisting")
+  duplicateOf         ReviewItem[]          @relation("ReviewDuplicateTarget")
+  savedBy             SavedOpportunity[]
+  activities          LeadActivity[]
+  errorReports        ErrorReport[]
+  collectionItems     CollectionItem[]
+  analyticsEvents     AnalyticsEvent[]
 
   @@index([searchVector(ops: raw("tsvector_ops"))], type: Gin)
   @@index([title(ops: raw("gin_trgm_ops"))], type: Gin)
@@ -521,6 +576,7 @@ model Source {
   opportunities   Opportunity[]
   collectionItems CollectionItem[]
   jobs            CrawlJob[]
+  snapshots       SourceSnapshot[]
 
   @@index([enabled, nextCheckAt])
   @@index([health])
@@ -529,15 +585,21 @@ model Source {
 /// Everything the crawler fetches lands here first — the Collection Inbox.
 /// Raw content never reaches the public site directly.
 model CollectionItem {
-  id           String  @id @default(cuid())
-  sourceId     String
-  url          String
+  id           String          @id @default(cuid())
+  sourceId     String?
+  origin       IngestionMethod @default(CRAWLER)
+  url          String?
   canonicalUrl String?
   pageTitle    String?
-  rawText      String? @db.Text
-  rawHtml      String? @db.Text
+  rawText      String?         @db.Text
+  rawHtml      String?         @db.Text
   contentHash  String?
   httpStatus   Int?
+
+  /// Set when an admin pasted the material rather than a crawler fetching it.
+  /// Never shown publicly — see docs/ARCHITECTURE.md.
+  sourceName  String?
+  createdById String?
 
   classification           CollectionClassification @default(UNKNOWN)
   classificationConfidence Float?
@@ -555,14 +617,140 @@ model CollectionItem {
 
   opportunityId String?
 
-  source      Source       @relation(fields: [sourceId], references: [id], onDelete: Cascade)
-  opportunity Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
-  reviewItems ReviewItem[]
+  source         Source?              @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  opportunity    Opportunity?         @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  createdBy      AdminUser?           @relation("CollectionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  reviewItems    ReviewItem[]
+  extractionRuns ExtractionRun[]
+  suggestions    CategorySuggestion[]
 
   @@unique([sourceId, url])
   @@index([status, classification])
+  @@index([origin, discoveredAt])
   @@index([sourceId, discoveredAt])
   @@index([contentHash])
+}
+
+/// One AI (or fallback) extraction attempt. Kept so an admin can see which
+/// model produced a draft, re-run it, and compare results over time.
+model ExtractionRun {
+  id             String              @id @default(cuid())
+  inputType      ExtractionInputType
+  inputReference String?
+  status         ExtractionStatus    @default(QUEUED)
+  provider       String
+  model          String?
+  promptVersion  String?
+
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  classification           CollectionClassification?
+  classificationConfidence Float?
+  classificationReason     String?                   @db.Text
+  overallConfidence        Float?
+
+  structuredResult Json?
+  rawResult        String? @db.Text
+  error            String? @db.Text
+
+  tokensIn  Int?
+  tokensOut Int?
+
+  collectionItemId String?
+  opportunityId    String?
+  createdById      String?
+
+  collectionItem CollectionItem?   @relation(fields: [collectionItemId], references: [id], onDelete: Cascade)
+  opportunity    Opportunity?      @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  createdBy      AdminUser?        @relation("ExtractionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  fields         FieldExtraction[]
+
+  @@index([collectionItemId, startedAt])
+  @@index([opportunityId, startedAt])
+  @@index([status])
+}
+
+/// Per-field value, confidence and the excerpt it came from. This is what makes
+/// "we could not confirm this" honest rather than a blank space.
+model FieldExtraction {
+  id              String  @id @default(cuid())
+  extractionRunId String
+  field           String
+  value           String? @db.Text
+  confidence      Float?
+  evidence        String? @db.Text
+  sourceReference String?
+  isUnknown       Boolean @default(false)
+
+  run ExtractionRun @relation(fields: [extractionRunId], references: [id], onDelete: Cascade)
+
+  @@unique([extractionRunId, field])
+  @@index([field, confidence])
+}
+
+/// Categories the model proposed, held apart from the ones an admin approved.
+/// A proposal for a category that does not exist yet carries a name instead of
+/// an id — taxonomy is never created automatically.
+model CategorySuggestion {
+  id               String           @id @default(cuid())
+  collectionItemId String?
+  opportunityId    String?
+  categoryId       String?
+  suggestedName    String?
+  confidence       Float?
+  reason           String?          @db.Text
+  status           SuggestionStatus @default(SUGGESTED)
+  createdAt        DateTime         @default(now())
+
+  collectionItem CollectionItem? @relation(fields: [collectionItemId], references: [id], onDelete: Cascade)
+  opportunity    Opportunity?    @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  category       Category?       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([opportunityId, status])
+  @@index([collectionItemId, status])
+}
+
+/// A possible match between a draft and something already in the database.
+/// "Same programme, next cohort" is a real and common answer, so the admin
+/// picks the resolution rather than the system guessing.
+model DuplicateCandidate {
+  id            String          @id @default(cuid())
+  opportunityId String
+  existingId    String
+  score         Float
+  signals       Json?
+  status        DuplicateStatus @default(OPEN)
+  resolvedById  String?
+  resolvedAt    DateTime?
+  createdAt     DateTime        @default(now())
+
+  opportunity Opportunity @relation("DuplicateNew", fields: [opportunityId], references: [id], onDelete: Cascade)
+  existing    Opportunity @relation("DuplicateExisting", fields: [existingId], references: [id], onDelete: Cascade)
+  resolvedBy  AdminUser?  @relation("DuplicateResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@unique([opportunityId, existingId])
+  @@index([status, score])
+}
+
+/// Content history per URL, so a re-crawl can tell "changed" from "unchanged"
+/// without re-running extraction on identical bytes.
+model SourceSnapshot {
+  id          String   @id @default(cuid())
+  sourceId    String?
+  url         String
+  contentHash String
+  httpStatus  Int?
+  title       String?
+  textLength  Int?
+  fetchedAt   DateTime @default(now())
+  crawlJobId  String?
+
+  source   Source?   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  crawlJob CrawlJob? @relation(fields: [crawlJobId], references: [id], onDelete: SetNull)
+
+  @@index([url, fetchedAt])
+  @@index([sourceId, fetchedAt])
 }
 
 /// The single gate between automation and the public database.
@@ -606,12 +794,19 @@ model ReviewItem {
 }
 
 /// Rejections are remembered so the crawler does not resurface the same page.
-model RejectedUrl {
-  id        String          @id @default(cuid())
-  url       String          @unique
-  reason    RejectionReason
-  note      String?
-  createdAt DateTime        @default(now())
+/// Remembers what was rejected so the crawler does not resurface it. Keyed by
+/// URL and by content fingerprint, because the same announcement reappears at
+/// different addresses.
+model RejectedItem {
+  id          String          @id @default(cuid())
+  url         String?         @unique
+  fingerprint String?         @unique
+  title       String?
+  reason      RejectionReason
+  note        String?
+  createdAt   DateTime        @default(now())
+
+  @@index([createdAt])
 }
 
 model CrawlJob {
@@ -629,8 +824,17 @@ model CrawlJob {
   finishedAt   DateTime?
   error        String?   @db.Text
   createdAt    DateTime  @default(now())
+  createdById  String?
 
-  source Source? @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  pagesFound         Int @default(0)
+  pagesProcessed     Int @default(0)
+  pagesSkipped       Int @default(0)
+  opportunitiesFound Int @default(0)
+  changesFound       Int @default(0)
+
+  source    Source?          @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  createdBy AdminUser?       @relation("JobCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  snapshots SourceSnapshot[]
 
   @@index([status, scheduledFor])
   @@index([sourceId, createdAt])
@@ -870,6 +1074,10 @@ model AdminUser {
   resolvedReviews        ReviewItem[]         @relation("ReviewResolver")
   createdSources         Source[]             @relation("SourceCreatedBy")
   resolvedErrorReports   ErrorReport[]        @relation("ErrorReportResolver")
+  collectedItems         CollectionItem[]     @relation("CollectionCreatedBy")
+  extractionRuns         ExtractionRun[]      @relation("ExtractionCreatedBy")
+  resolvedDuplicates     DuplicateCandidate[] @relation("DuplicateResolver")
+  createdJobs            CrawlJob[]           @relation("JobCreatedBy")
 }
 
 model AdminSession {

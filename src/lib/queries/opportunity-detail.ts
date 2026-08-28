@@ -1,12 +1,13 @@
 import "server-only";
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
+import { publiclyVisible } from "@/lib/visibility";
 import { search, type SearchHit } from "@/lib/search";
 
 /** Cached per request — metadata and the page body both need the record. */
 export const getPublishedOpportunity = cache(async (slug: string) => {
   return prisma.opportunity.findFirst({
-    where: { slug, workflowStatus: "PUBLISHED", isActive: true },
+    where: { slug, ...publiclyVisible },
     include: {
       categories: {
         include: {
