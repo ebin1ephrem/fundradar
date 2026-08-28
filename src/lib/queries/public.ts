@@ -12,6 +12,7 @@ export async function filterCategories(): Promise<FilterCategory[]> {
       categoryType: {
         in: ["OPPORTUNITY_TYPE", "INDUSTRY", "STARTUP_STAGE", "FOUNDER_TYPE"],
       },
+      NOT: { slug: { contains: "subsid", mode: "insensitive" } },
     },
     orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
     select: { name: true, slug: true, categoryType: true, featured: true },
@@ -31,7 +32,11 @@ export async function statesWithOpportunities(): Promise<string[]> {
 
 export async function homepageCategories() {
   return prisma.category.findMany({
-    where: { active: true, showOnHomepage: true },
+    where: {
+      active: true,
+      showOnHomepage: true,
+      NOT: { slug: { contains: "subsid", mode: "insensitive" } },
+    },
     orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
     select: { id: true, name: true, slug: true, description: true, icon: true },
   });

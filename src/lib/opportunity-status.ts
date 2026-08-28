@@ -31,7 +31,7 @@ export function lifecycleStatus(input: LifecycleInput): LifecycleStatus {
 export const LIFECYCLE_LABEL: Record<LifecycleStatus, string> = {
   UPCOMING: "Upcoming",
   OPEN: "Open",
-  CLOSING_SOON: "Closing soon",
+  CLOSING_SOON: "Closing Soon",
   CLOSED: "Closed",
   ROLLING: "Rolling",
 };

@@ -107,14 +107,16 @@ export function FilterPanel({
       </FilterGroup>
 
       <FilterGroup title="Funding type">
-        {Object.values(FundingType).map((type) => (
-          <FilterCheck
-            key={type}
-            label={FUNDING_TYPE_LABEL[type]}
-            checked={isSelected(params, "type", type)}
-            href={href(toggleValue(params, "type", type))}
-          />
-        ))}
+        {Object.values(FundingType)
+          .filter((type) => type !== FundingType.SUBSIDY)
+          .map((type) => (
+            <FilterCheck
+              key={type}
+              label={FUNDING_TYPE_LABEL[type]}
+              checked={isSelected(params, "type", type)}
+              href={href(toggleValue(params, "type", type))}
+            />
+          ))}
       </FilterGroup>
 
       <FilterGroup title="Deadline">

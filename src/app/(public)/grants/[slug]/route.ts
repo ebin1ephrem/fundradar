@@ -13,7 +13,11 @@ export async function GET(
 ) {
   const { slug } = await params;
   const category = await prisma.category.findFirst({
-    where: { slug, active: true },
+    where: {
+      slug,
+      active: true,
+      NOT: { slug: { contains: "subsid", mode: "insensitive" } },
+    },
     select: { slug: true },
   });
 

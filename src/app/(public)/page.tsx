@@ -210,7 +210,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* How the database is kept honest --------------------------------- */}
+      {/* Founder story --------------------------------------------------- */}
       <section className="pb-4">
         <div className="page-shell-wide">
           <div className="on-dark panel-dark relative overflow-hidden px-6 py-14 lg:px-16 lg:py-20">
@@ -272,9 +272,9 @@ export default async function HomePage() {
       {/* Quick routes ---------------------------------------------------- */}
       <section className="border-t border-line bg-subtle py-14 lg:py-20">
         <div className="page-shell">
-          <h2 className="display-md">Popular ways in</h2>
+          <h2 className="display-md">{home.open.headline}</h2>
           <p className="mt-2 text-[14.5px] text-muted">
-            Four routes founders take most often.
+            {home.open.subline}
           </p>
           <div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <Route
@@ -305,7 +305,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Weekly Signal / closing CTA ------------------------------------- */}
+      {/* Weekly Radar / closing CTA -------------------------------------- */}
       <section className="border-t border-line py-14 lg:py-20">
         <div className="page-shell grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:items-center">
           <div>

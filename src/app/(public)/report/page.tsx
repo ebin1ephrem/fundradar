@@ -9,7 +9,7 @@ import { ReportForm } from "./form";
 export const metadata: Metadata = {
   title: "Report an error",
   description:
-    "Noticed something wrong in a FundRadar listing? Tell us and we'll check it against the official source.",
+    "Noticed something wrong in a FundRadar listing? Tell us and we'll check the official programme page.",
   alternates: { canonical: "/report" },
   robots: { index: false, follow: true },
 };

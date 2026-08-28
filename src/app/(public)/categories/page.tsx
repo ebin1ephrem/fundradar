@@ -33,7 +33,10 @@ const ORDER: CategoryType[] = [
 
 export default async function CategoriesIndexPage() {
   const categories = await prisma.category.findMany({
-    where: { active: true },
+    where: {
+      active: true,
+      NOT: { slug: { contains: "subsid", mode: "insensitive" } },
+    },
     orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
     select: {
       id: true,
@@ -57,9 +60,7 @@ export default async function CategoriesIndexPage() {
             {home.categories.headline}
           </h1>
           <p className="lede mt-4 max-w-[58ch]">
-            {home.categories.subline} One opportunity can be several things at
-            once — a CSR-backed programme might also be a grant, an incubation
-            call and ClimateTech.
+            {home.categories.subline}
           </p>
         </div>
       </div>

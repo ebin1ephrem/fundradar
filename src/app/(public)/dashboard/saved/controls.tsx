@@ -7,7 +7,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { cn } from "@/lib/utils";
 
 const OPTIONS: { value: SavedStatus; label: string }[] = [
-  { value: "SAVED", label: "Saved" },
+  { value: "SAVED", label: "On your Radar" },
   { value: "INTERESTED", label: "Interested" },
   { value: "APPLIED", label: "Applied" },
   { value: "NOT_RELEVANT", label: "Not relevant" },

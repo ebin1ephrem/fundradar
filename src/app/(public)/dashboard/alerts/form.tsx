@@ -59,14 +59,14 @@ export function AlertsForm({
         <Toggle
           name="weekly"
           defaultChecked={weekly}
-          title="Weekly funding digest"
+          title="The Weekly Radar"
           description="Newly announced opportunities matching your interests, plus the ones closing soon."
         />
         <Toggle
           name="reminders"
           defaultChecked={reminders}
           title="Deadline reminders by email"
-          description="A nudge before the deadline on anything you have saved."
+          description="A nudge before the deadline on anything you have put on your Radar."
         />
         <Toggle
           name="whatsappAlerts"
@@ -122,7 +122,7 @@ export function AlertsForm({
           name="emailConsent"
           defaultChecked={emailConsent}
           title="Email me funding opportunities"
-          description="Required for the weekly digest and email reminders."
+          description="Required for the Weekly Radar and email reminders."
         />
         <Toggle
           name="whatsappConsent"

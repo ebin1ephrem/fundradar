@@ -36,6 +36,7 @@ export function OpportunityCard({
 
   // Opportunity type first, then the rest — the type is what a founder scans for.
   const shownCategories = [...hit.categories]
+    .filter((category) => !category.slug.toLowerCase().includes("subsid"))
     .sort((a, b) => {
       if (a.isPrimary !== b.isPrimary) return a.isPrimary ? -1 : 1;
       const rank = (t: string) => (t === "OPPORTUNITY_TYPE" ? 0 : t === "INDUSTRY" ? 1 : 2);

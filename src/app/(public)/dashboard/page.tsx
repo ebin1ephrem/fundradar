@@ -46,11 +46,11 @@ export default async function DashboardPage() {
   return (
     <div className="grid gap-12">
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Tile label="Saved" value={saved.length} href="/dashboard/saved" />
+        <Tile label={dash.sections.saved} value={saved.length} href="/dashboard/saved" />
         <Tile
           label={dash.sections.closing}
           value={savedClosingSoon.length}
-          hint="Of the ones you saved"
+          hint="From what's on your Radar"
           accent={savedClosingSoon.length > 0}
         />
         <Tile

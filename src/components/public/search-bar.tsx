@@ -28,7 +28,7 @@ export function SearchBar({
         ),
       )}
       <label htmlFor="q" className="sr-only">
-        Search funding opportunities
+        Search startup opportunities
       </label>
       <Search
         className={

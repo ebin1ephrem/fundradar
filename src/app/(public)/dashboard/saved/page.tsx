@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 const TABS: { key: SavedStatus | "ALL"; label: string }[] = [
   { key: "ALL", label: "All" },
-  { key: "SAVED", label: "Saved" },
+  { key: "SAVED", label: "On your Radar" },
   { key: "INTERESTED", label: "Interested" },
   { key: "APPLIED", label: "Applied" },
   { key: "NOT_RELEVANT", label: "Not relevant" },
@@ -64,7 +64,7 @@ export default async function SavedPage({
 
   return (
     <div>
-      <nav className="mb-6 flex flex-wrap gap-1.5" aria-label="Saved status">
+      <nav className="mb-6 flex flex-wrap gap-1.5" aria-label="Radar status">
         {TABS.map((tab) => (
           <Link
             key={tab.key}

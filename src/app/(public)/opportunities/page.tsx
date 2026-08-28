@@ -90,8 +90,8 @@ export default async function OpportunitiesPage({
           <h1 className="display-md max-w-[20ch]">{heading}</h1>
           <p className="lede mt-3 max-w-[58ch]">
             {results.total.toLocaleString("en-IN")}{" "}
-            {results.total === 1 ? "opportunity" : "opportunities"} — reviewed
-            before we publish, each linking to the provider&apos;s own page.
+            {results.total === 1 ? "opportunity" : "opportunities"} open now,
+            each linking to the provider&apos;s own page.
           </p>
 
           <div className="mt-7 max-w-[680px]">
@@ -194,12 +194,12 @@ function EmptyState({
           ? searchCopy.noResults.headline(query)
           : hasFilters
             ? "No signal for that combination — yet."
-            : "Nothing published yet."}
+            : "Nothing on the Radar yet."}
       </p>
       <p className="mx-auto mt-2 max-w-[52ch] text-[14px] leading-relaxed text-muted">
         {hasFilters
           ? searchCopy.noResults.body
-          : "Opportunities appear here once they have been reviewed and published."}
+          : "New opportunities will appear here as they become available."}
       </p>
       {hasFilters ? (
         <div className="mt-6 flex flex-wrap justify-center gap-2">

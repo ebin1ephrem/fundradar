@@ -4,7 +4,7 @@ import { brand } from "@/content/copy";
 
 const EXPLORE = [
   { href: "/opportunities", label: "Open opportunities" },
-  { href: "/opportunities?closing=7", label: "Closing soon" },
+  { href: "/opportunities?closing=7", label: "Closing Soon" },
   { href: "/categories", label: "Categories" },
   { href: "/opportunities", label: "Search" },
 ];
@@ -22,6 +22,7 @@ export async function SiteFooter() {
       parentId: null,
       featured: true,
       categoryType: "OPPORTUNITY_TYPE",
+      NOT: { slug: { contains: "subsid", mode: "insensitive" } },
     },
     orderBy: { displayOrder: "asc" },
     select: { name: true, slug: true },
@@ -64,10 +65,8 @@ export async function SiteFooter() {
 
         <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6">
           <p className="text-[12.5px] text-muted">
-            © {new Date().getFullYear()} {brand.lockup}. Information is
-            collected from publicly available official sources and reviewed
-            before publication — always verify with the official programme page
-            before applying.
+            © {new Date().getFullYear()} {brand.lockup}. Programme details can
+            change. Check the official programme page before applying.
           </p>
         </div>
       </div>

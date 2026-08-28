@@ -113,7 +113,7 @@ export default function AboutPage() {
                 </p>
               ))}
               <Link href="/opportunities" className="btn btn-accent mt-8">
-                {home.hero.primaryCta}
+                {about.trust.cta}
                 <ArrowRight className="size-4" strokeWidth={1.8} />
               </Link>
             </div>

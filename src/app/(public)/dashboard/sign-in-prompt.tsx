@@ -33,7 +33,7 @@ export function SignInPrompt() {
           Pick up where you left off.
         </h1>
         <p className="lede mt-4 max-w-[46ch]">
-          Your saved opportunities, the ones closing soon, and funding matched to
+          Opportunities on your Radar, the ones closing soon, and funding matched to
           what your startup is working on.
         </p>
         <p className="mt-6 text-[14px] text-muted">

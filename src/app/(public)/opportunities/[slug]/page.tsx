@@ -112,7 +112,12 @@ export default async function OpportunityPage({
   const stages = byType("STARTUP_STAGE");
   const industries = byType("INDUSTRY");
   const founderTypes = byType("FOUNDER_TYPE");
-  const opportunityTypes = byType("OPPORTUNITY_TYPE");
+  const opportunityTypes = byType("OPPORTUNITY_TYPE").filter(
+    (link) => !link.category.slug.toLowerCase().includes("subsid"),
+  );
+  const publicFundingTypes = opportunity.fundingTypes.filter(
+    (type) => type !== "SUBSIDY",
+  );
 
   const benefits = BENEFIT_FIELDS.filter(
     (b) => opportunity[b.name] as boolean,
@@ -220,7 +225,7 @@ export default async function OpportunityPage({
                   {LIFECYCLE_LABEL[status]}
                 </span>
                 {opportunity.isEquityFree ? <span className="pill">Equity-free</span> : null}
-                {opportunity.fundingTypes.slice(0, 3).map((type) => (
+                {publicFundingTypes.slice(0, 3).map((type) => (
                   <span key={type} className="pill">
                     {FUNDING_TYPE_LABEL[type]}
                   </span>
@@ -235,20 +240,27 @@ export default async function OpportunityPage({
               <p className="lede mt-5 max-w-[62ch]">{opportunity.shortDescription}</p>
 
               <div className="mt-6 flex flex-wrap items-center gap-1.5">
-                {opportunity.categories.slice(0, 8).map((link) => (
-                  <Link
-                    key={link.category.slug}
-                    href={`/categories/${link.category.slug}`}
-                    className="pill transition-colors duration-200 hover:border-ink hover:text-ink"
-                  >
-                    {link.category.name}
-                  </Link>
-                ))}
+                {opportunity.categories
+                  .filter(
+                    (link) =>
+                      !link.category.slug.toLowerCase().includes("subsid"),
+                  )
+                  .slice(0, 8)
+                  .map((link) => (
+                    <Link
+                      key={link.category.slug}
+                      href={`/categories/${link.category.slug}`}
+                      className="pill transition-colors duration-200 hover:border-ink hover:text-ink"
+                    >
+                      {link.category.name}
+                    </Link>
+                  ))}
               </div>
             </div>
 
             <aside className="lg:sticky lg:top-[92px] lg:h-fit">
               <div className="rounded-[12px] border border-line bg-canvas p-5 shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
+                <p className="eyebrow mb-2">At a glance</p>
                 <dl>
                   <FactRow
                     label="Funding"
@@ -336,17 +348,17 @@ export default async function OpportunityPage({
         <div className="grid max-w-[760px] gap-8">
           {gate.isLocked("fullDescription") ? (
             <LockedSection
-              title="Overview"
+              title={oppCopy.sections.overview}
               teaser="Read the full programme description"
               reason="view_full_details"
             />
           ) : opportunity.fullDescription ? (
-            <DetailSection id="overview" title="Overview">
+            <DetailSection id="overview" title={oppCopy.sections.overview}>
               <ProviderText text={opportunity.fullDescription} />
             </DetailSection>
           ) : null}
 
-          <DetailSection id="funding" title="Funding">
+          <DetailSection id="funding" title={oppCopy.sections.funding}>
             <dl className="rounded-[12px] border border-line px-5 py-1">
               <FactRow
                 label="Amount"
@@ -368,10 +380,10 @@ export default async function OpportunityPage({
                       : "Yes"
                 }
               />
-              {opportunity.fundingTypes.length ? (
+              {publicFundingTypes.length ? (
                 <FactRow
                   label="Funding type"
-                  value={opportunity.fundingTypes
+                  value={publicFundingTypes
                     .map((t) => FUNDING_TYPE_LABEL[t])
                     .join(", ")}
                 />
@@ -381,42 +393,42 @@ export default async function OpportunityPage({
 
           {gate.isLocked("eligibility") ? (
             <LockedSection
-              title="Eligibility"
+              title={oppCopy.sections.eligibility}
               teaser="See the full eligibility criteria"
               reason="view_eligibility"
             />
           ) : (
-          <DetailSection id="eligibility" title="Eligibility">
-            <ProviderText text={opportunity.eligibilitySummary} />
-            {eligibilityFlags.length ? (
-              <ul className="mt-5 grid gap-1.5 sm:grid-cols-2">
-                {eligibilityFlags.map((flag) => (
-                  <li
-                    key={flag.label}
-                    className="flex items-center gap-2 rounded-[8px] border border-line px-3 py-2 text-[13.5px]"
-                  >
-                    <span
-                      className={cn(
-                        "grid size-4 shrink-0 place-items-center rounded-full",
-                        flag.value ? "bg-accent text-ink" : "bg-subtle text-faint",
-                      )}
+            <DetailSection id="eligibility" title={oppCopy.sections.eligibility}>
+              <ProviderText text={opportunity.eligibilitySummary} />
+              {eligibilityFlags.length ? (
+                <ul className="mt-5 grid gap-1.5 sm:grid-cols-2">
+                  {eligibilityFlags.map((flag) => (
+                    <li
+                      key={flag.label}
+                      className="flex items-center gap-2 rounded-[8px] border border-line px-3 py-2 text-[13.5px]"
                     >
-                      {flag.value ? <Check className="size-2.5" strokeWidth={3} /> : "–"}
-                    </span>
-                    {flag.label} {flag.value ? "required" : "not required"}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-            {opportunity.otherEligibility ? (
-              <div className="mt-5">
-                <ProviderText text={opportunity.otherEligibility} />
-              </div>
-            ) : null}
-          </DetailSection>
+                      <span
+                        className={cn(
+                          "grid size-4 shrink-0 place-items-center rounded-full",
+                          flag.value ? "bg-accent text-ink" : "bg-subtle text-faint",
+                        )}
+                      >
+                        {flag.value ? <Check className="size-2.5" strokeWidth={3} /> : "–"}
+                      </span>
+                      {flag.label} {flag.value ? "required" : "not required"}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              {opportunity.otherEligibility ? (
+                <div className="mt-5">
+                  <ProviderText text={opportunity.otherEligibility} />
+                </div>
+              ) : null}
+            </DetailSection>
           )}
 
-          <DetailSection id="who-can-apply" title="Who can apply">
+          <DetailSection id="who-can-apply" title={oppCopy.sections.whoCanApply}>
             <dl className="rounded-[12px] border border-line px-5 py-1">
               <FactRow label="Geographic scope" value={GEOGRAPHY_SCOPE_LABEL[opportunity.geographyScope]} />
               <FactRow
@@ -451,12 +463,12 @@ export default async function OpportunityPage({
 
           {gate.isLocked("benefits") ? (
             <LockedSection
-              title="Benefits"
+              title={oppCopy.sections.benefits}
               teaser="See everything the programme offers"
               reason="view_benefits"
             />
           ) : benefits.length || opportunity.benefitsSummary ? (
-            <DetailSection id="benefits" title="Benefits">
+            <DetailSection id="benefits" title={oppCopy.sections.benefits}>
               <ProviderText text={opportunity.benefitsSummary} />
               {benefits.length ? (
                 <ul className="mt-5 flex flex-wrap gap-1.5">
@@ -473,12 +485,12 @@ export default async function OpportunityPage({
 
           {gate.isLocked("applicationProcess") ? (
             <LockedSection
-              title="Application process"
+              title={oppCopy.sections.applicationProcess}
               teaser="See how to apply, step by step"
               reason="view_application_details"
             />
           ) : opportunity.applicationProcess || opportunity.applicationInstructions ? (
-            <DetailSection id="application-process" title="Application process">
+            <DetailSection id="application-process" title={oppCopy.sections.applicationProcess}>
               <ProviderText
                 text={opportunity.applicationProcess ?? opportunity.applicationInstructions}
               />
@@ -487,23 +499,23 @@ export default async function OpportunityPage({
 
           {gate.isLocked("requiredDocuments") ? (
             <LockedSection
-              title="Required documents"
+              title={oppCopy.sections.documents}
               teaser="See what you need to prepare"
               reason="view_documents"
             />
           ) : opportunity.requiredDocuments ? (
-            <DetailSection id="required-documents" title="Required documents">
+            <DetailSection id="required-documents" title={oppCopy.sections.documents}>
               <ProviderText text={opportunity.requiredDocuments} />
             </DetailSection>
           ) : null}
 
           {gate.isLocked("selectionProcess") ? null : opportunity.selectionProcess ? (
-            <DetailSection id="selection-process" title="Selection process">
+            <DetailSection id="selection-process" title={oppCopy.sections.selection}>
               <ProviderText text={opportunity.selectionProcess} />
             </DetailSection>
           ) : null}
 
-          <DetailSection id="important-dates" title="Important dates">
+          <DetailSection id="important-dates" title={oppCopy.sections.dates}>
             <dl className="rounded-[12px] border border-line px-5 py-1">
               <FactRow
                 label="Applications open"
@@ -536,7 +548,7 @@ export default async function OpportunityPage({
             </DetailSection>
           ) : null}
 
-          <DetailSection id="source" title="Official source">
+          <DetailSection id="source" title={oppCopy.sections.source}>
             <div className="rounded-[12px] border border-line p-5">
               <a
                 href={opportunity.officialSourceUrl}

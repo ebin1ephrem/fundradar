@@ -18,6 +18,7 @@ export default async function AlertsPage() {
         active: true,
         parentId: null,
         categoryType: { in: ["OPPORTUNITY_TYPE", "INDUSTRY"] },
+        NOT: { slug: { contains: "subsid", mode: "insensitive" } },
       },
       orderBy: [{ categoryType: "asc" }, { displayOrder: "asc" }],
       select: { id: true, name: true, categoryType: true },

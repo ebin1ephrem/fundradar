@@ -20,11 +20,18 @@ export const dynamic = "force-dynamic";
 
 const getCategory = cache(async (slug: string) =>
   prisma.category.findFirst({
-    where: { slug, active: true },
+    where: {
+      slug,
+      active: true,
+      NOT: { slug: { contains: "subsid", mode: "insensitive" } },
+    },
     include: {
       parent: { select: { name: true, slug: true } },
       children: {
-        where: { active: true },
+        where: {
+          active: true,
+          NOT: { slug: { contains: "subsid", mode: "insensitive" } },
+        },
         orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
         select: { name: true, slug: true },
       },
@@ -230,7 +237,7 @@ export default async function CategoryPage({
 
             <Section
               title={home.recent.headline}
-              description={`Recently reviewed and published in ${category.name}.`}
+              description={`Recently added opportunities in ${category.name}.`}
               href={`/opportunities?c=${category.slug}`}
             >
               <OpportunityGrid hits={latest.hits} savedIds={savedIds} />
@@ -332,6 +339,7 @@ async function relatedCategories(
     where: {
       active: true,
       id: { not: id },
+      NOT: { slug: { contains: "subsid", mode: "insensitive" } },
       OR: [{ parentId }, { categoryType: categoryType as never, parentId: null }],
     },
     orderBy: [{ featured: "desc" }, { displayOrder: "asc" }],

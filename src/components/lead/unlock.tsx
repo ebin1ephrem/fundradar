@@ -55,7 +55,7 @@ export function SaveButton({
         ) : (
           <Bookmark className="size-4" strokeWidth={1.7} />
         )}
-        {saved ? oppCopy.cta.saved : "Save"}
+        {saved ? oppCopy.cta.saved : oppCopy.cta.save}
       </button>
     );
   }
@@ -66,7 +66,9 @@ export function SaveButton({
       disabled={pending}
       onClick={() => run(submit)}
       aria-pressed={saved}
-      aria-label={saved ? `Remove ${title} from saved` : `Save ${title}`}
+      aria-label={
+        saved ? `Remove ${title} from your Radar` : `Put ${title} on your Radar`
+      }
       title={saved ? oppCopy.cta.saved : oppCopy.cta.save}
       className={cn(
         "relative z-10 grid size-8 shrink-0 place-items-center rounded-[6px] border transition-colors duration-200",

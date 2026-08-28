@@ -17,9 +17,9 @@ export const brand = {
   parent: "Merstra",
   tagline: "Signal, not noise.",
   oneLine:
-    "FundRadar cuts through the noise in startup funding — finding, reviewing and organising grants, incubation calls, funding programmes and other opportunities so founders see what's relevant before they miss it.",
+    "FundRadar brings together grants, programmes and startup opportunities so founders can find what could move their startup forward.",
   trustLine:
-    "Every opportunity on FundRadar links to its official source. We review before we publish. We don't fabricate information we can't verify.",
+    "Curated opportunities for your next move.",
   unknownValue: "Not specified by provider",
 } as const;
 
@@ -27,7 +27,7 @@ export const brand = {
 export const nav = {
   links: [
     { href: "/opportunities", label: "Open opportunities" },
-    { href: "/opportunities?closing=7", label: "Closing soon" },
+    { href: "/opportunities?closing=7", label: "Closing Soon" },
     { href: "/categories", label: "Categories" },
     { href: "/about", label: "About" },
   ],
@@ -43,15 +43,14 @@ export const nav = {
 /** Part 2 — homepage. */
 export const home = {
   hero: {
-    eyebrow: "GRANTS · FUNDING · PROGRAMS · OPPORTUNITIES",
-    headline: "Signal, not noise.",
-    headlineSecond: "Find the startup funding that actually matters to you.",
+    eyebrow: "OPPORTUNITIES FOR FOUNDERS",
+    headline: "Find what could move",
+    headlineSecond: "your startup forward.",
     subline:
-      "Grants, seed funds, incubation programmes, CSR funding, accelerators and open calls — collected from across the ecosystem, reviewed before we publish and organised so you can act on what's relevant before the deadline passes.",
-    supporting:
-      "Collected widely. Reviewed before we publish. Updated when things change.",
+      "Grants, funding programmes, incubators, accelerators, corporate opportunities, competitions and more — curated in one place for founders who would rather spend their time building.",
+    supporting: "Opportunities worth knowing about.",
     primaryCta: "See what's open",
-    secondaryCta: "Get the Weekly Signal",
+    secondaryCta: "Get the Weekly Radar",
   },
   search: {
     placeholder: "Search grants, programs, sectors or organisations...",
@@ -59,82 +58,81 @@ export const home = {
   },
   open: {
     eyebrow: "OPEN NOW",
-    headline: "What's worth looking at right now.",
-    subline: "Start with the opportunities you can still act on.",
-    cta: "Browse all open opportunities",
+    headline: "What's on the Radar?",
+    subline: "Explore opportunities open now across funding, programmes, partnerships and startup support.",
+    cta: "See all opportunities",
   },
   closing: {
     eyebrow: "CLOSING SOON",
-    headline: "Worth checking before the window closes.",
-    subline: "Opportunities with approaching deadlines — sorted by urgency.",
+    headline: "Worth checking before they close.",
+    subline: "Opportunities with approaching deadlines, so you can decide what deserves your time.",
     cta: "See closing soon",
   },
   categories: {
     eyebrow: "EXPLORE BY CATEGORY",
-    headline: "Not every opportunity looks like a grant.",
-    subline:
-      "Explore funding and startup support across the categories that matter to you.",
+    headline: "What could help you move forward?",
+    subline: "Explore opportunities across funding, programmes, partnerships and startup support.",
     cta: "View all categories",
   },
   recent: {
     eyebrow: "RECENTLY ADDED",
-    headline: "New on the radar.",
-    subline: "Opportunities we've recently reviewed and published.",
+    headline: "New on the Radar",
+    subline: "Recently added opportunities that may be worth a look.",
   },
   howItWorks: {
-    eyebrow: "HOW FUNDRADAR WORKS",
-    headline: "We find it. We review it. You decide.",
+    eyebrow: "LESS SEARCHING. BETTER DECISIONS.",
+    headline: "Built around your next move.",
     steps: [
       {
-        title: "We scan.",
-        body: "FundRadar monitors government portals, incubators, corporates, universities and ecosystem organisations for grants, funding programmes and startup opportunities.",
+        title: "Find what matters.",
+        body: "Explore funding, programmes and startup opportunities around what your company needs next.",
       },
       {
-        title: "We review.",
-        body: "Collected opportunities are not automatically published. They go through our review process before they appear on the platform.",
+        title: "Understand it quickly.",
+        body: "See the key information without spending hours working through pages of programme details.",
       },
       {
-        title: "You search.",
-        body: "Browse by category, industry, stage, location or funding type. Search for what matters to your startup.",
+        title: "Choose where to spend your time.",
+        body: "Not every opportunity deserves an application. Focus on the ones that fit what you are building.",
       },
       {
-        title: "You act.",
-        body: "See the eligibility, funding, deadline and application details — then go directly to the official source to apply.",
+        title: "Act while it's open.",
+        body: "Check the deadline, eligibility and next step, then go to the official programme page to apply.",
       },
       {
-        title: "We keep watching.",
-        body: "Deadlines change. New calls open. Programmes reopen. FundRadar keeps scanning so you don't have to.",
+        title: "Keep moving.",
+        body: "New opportunities keep appearing. Come back when your startup is ready for its next move.",
       },
     ],
   },
   trust: {
-    eyebrow: "HOW WE WORK",
-    headline: "Automation helps us look. People decide what gets published.",
-    body: "FundRadar uses technology to discover and organise opportunities from across the ecosystem. But automatically collected information is not automatically published.",
+    eyebrow: "BUILT ON THE FOUNDER'S SIDE",
+    headline: "We built FundRadar because we've been on this side of the search.",
+    body: "Good opportunities are too easy to miss. Startup support is spread across ministries, incubators, universities, corporations, foundations, investors and ecosystem organisations. A useful opportunity might be sitting on a government portal, buried in an incubator page, shared by a corporate innovation team or circulating inside a network you are not part of yet.",
     body2:
-      "Before an opportunity appears on FundRadar, it goes through our review process. We check the source, verify the details and link back to the official page so you can confirm and apply directly.",
+      "Founders should not have to be everywhere to find what could help them move forward. FundRadar brings those opportunities together and makes them easier to understand, compare and act on.",
     body3:
-      "The goal is not to give you more information. The goal is to give you information clear enough to act on.",
+      "Sometimes the right opportunity at the right moment can change what a startup does next.",
     pillars: [
       {
-        title: "Official sources only",
-        body: "Every record links to the provider's own page. Nothing is copied from another directory.",
+        title: "One place to look",
+        body: "Find opportunities from across the startup support landscape without checking every source yourself.",
       },
       {
-        title: "Reviewed before publishing",
-        body: "Automated extraction is a draft. A person verifies it before anyone sees it.",
+        title: "Clear enough to compare",
+        body: "Understand what an opportunity offers, who it is for and when you need to act.",
       },
       {
-        title: "Watched for changes",
-        body: "Deadline moved? Funding changed? The change is detected, checked, then updated.",
+        title: "Your decision",
+        body: "Use the details to decide what is worth your time, then continue on the official programme page.",
       },
     ],
   },
   banner: {
-    headline: "Don't miss the signal.",
+    headline: "Let us keep an eye out while you keep building.",
     subline:
-      "Get startup funding opportunities, incubation calls and deadline alerts delivered to you — curated around what matters to your startup.",
-    cta: "Get on the radar",
+      "A short weekly selection of new opportunities, approaching deadlines and programmes worth a look.",
+    cta: "Get the Weekly Radar",
   },
 } as const;
 
@@ -149,58 +147,60 @@ export const about = {
     ],
   },
   why: {
-    eyebrow: "WHY FUNDRADAR",
-    headline: "Built from the other side of the noise.",
+    eyebrow: "BUILT FROM EXPERIENCE",
+    headline: "Built by people who have felt the problem.",
     body: [
       "FundRadar comes from founders and ecosystem builders who have spent years working with startups, running programmes and watching good founders miss opportunities they could have used.",
-      "Not because the opportunity didn't exist.",
-      "Because it was announced on a government website nobody checks. Because the eligibility was written in language nobody could parse. Because the deadline was forwarded on WhatsApp three days too late. Because the founder had more urgent things to do than scan forty websites every week.",
-      "We thought this part of building a startup should produce less noise and more signal.",
+      "Not because the opportunity did not exist.",
+      "Because it was announced on a government website nobody checks. Because the eligibility was difficult to understand. Because the deadline arrived in a forwarded message three days too late. Because the founder had more urgent things to do than check dozens of websites every week.",
+      "We thought this part of building a startup should take less searching and lead to better decisions.",
       "So we started building FundRadar.",
     ],
   },
   merstra: {
-    eyebrow: "A MERSTRA INITIATIVE",
-    headline: "Built inside the ecosystem, not outside it.",
+    eyebrow: "FUNDRADAR BY MERSTRA",
+    headline: "FundRadar by Merstra",
     body: [
-      "FundRadar is a Merstra initiative. It grew from something we kept seeing while working alongside founders, incubators and programme operators:",
-      "There are opportunities. There are founders who need them. And far too often, the two don't connect at the right time.",
-      "We've seen founders spend hours searching for funding that was listed on a page they didn't know existed. We've seen opportunities circulate inside small networks without reaching the startups that could benefit. We've seen founders discover calls after applications closed.",
-      "And we've seen how much difference the right opportunity — discovered at the right moment — can make.",
-      "FundRadar is our attempt to close that gap. Not with another pile of links. With a working signal filter.",
+      "Merstra works with founders, incubators and programme operators across the startup ecosystem.",
+      "FundRadar grew from something we kept seeing: there are opportunities, there are founders who need them, and too often the two do not connect at the right time.",
+      "FundRadar is our attempt to make that connection easier.",
     ],
   },
   job: {
-    eyebrow: "OUR JOB",
-    headline: "Help founders see the signal early enough to act on it.",
+    eyebrow: "THE WIDER OPPORTUNITY LANDSCAPE",
+    headline: "Because growth does not come from one kind of opportunity.",
     body: [
-      "That means going beyond grants.",
-      "A startup may need ₹25 lakh today. Six months later, the more valuable opportunity may be access to an incubator, a corporate pilot, a research collaboration, a market-access programme, cloud credits, an accelerator, a competition or the right introduction.",
-      "Growth doesn't arrive through one type of opportunity. FundRadar reflects that.",
+      "A grant can create room to build.",
+      "An incubator can provide structure, facilities and a useful network.",
+      "A corporate programme can lead to a pilot or partnership.",
+      "An accelerator can sharpen the company and expand its reach.",
+      "A competition can bring visibility, credibility or capital.",
+      "An investor introduction can open a different path entirely.",
+      "What matters next depends on the startup. FundRadar reflects that wider opportunity landscape.",
     ],
   },
   promise: {
-    eyebrow: "THE FUNDRADAR PROMISE",
+    eyebrow: "BUILT AROUND YOUR NEXT MOVE",
     items: [
       {
-        title: "Find.",
-        body: "We scan the places where startup opportunities actually appear — government portals, incubator sites, corporate innovation pages, university programmes, foundation announcements and ecosystem platforms.",
+        title: "Find what matters.",
+        body: "Explore funding, programmes and startup opportunities around what your company needs next.",
       },
       {
-        title: "Review.",
-        body: "What we collect is not automatically published. Opportunities go through our review process before they appear on FundRadar.",
+        title: "Understand it quickly.",
+        body: "See the key information without spending hours working through pages of programme details.",
       },
       {
-        title: "Organise.",
-        body: "One opportunity can be several things at once. A CSR-backed programme might also be: Grant + Incubation + ClimateTech. We organise opportunities around how founders actually search — not how bureaucracies file them.",
+        title: "Choose where to spend your time.",
+        body: "Not every opportunity deserves an application. Focus on the ones that fit what you are building.",
       },
       {
-        title: "Surface.",
-        body: "Funding, eligibility, deadlines and the details founders need to make a decision should be easy to find. Not buried. Not decorated. Just clear.",
+        title: "Act while it's open.",
+        body: "Check the deadline, eligibility and next step, then go to the official programme page to apply.",
       },
       {
-        title: "Keep watching.",
-        body: "Opportunities don't stop appearing. Deadlines change. Programmes reopen. New calls go live. FundRadar keeps scanning so you don't have to keep checking every source yourself.",
+        title: "Keep moving.",
+        body: "New opportunities keep appearing. Come back when your startup is ready for its next move.",
       },
     ],
   },
@@ -215,21 +215,21 @@ export const about = {
     ],
   },
   trust: {
-    headline: "Automation helps us look. People decide what gets published.",
+    headline: "Whatever you're building, there is usually a next move.",
     body: [
-      "FundRadar uses technology to discover and organise opportunities from across the ecosystem. But automatically collected information is not automatically published.",
-      "Before an opportunity appears on FundRadar, it goes through our review process. And wherever possible, we link directly to the original source so you can verify and apply yourself.",
-      "The goal is not to give you more information. The goal is to give you information you can trust enough to act on.",
+      "It might be funding, a programme, a pilot, an introduction, a competition or access to a new market.",
+      "FundRadar helps you see what is available and decide what could move your startup forward.",
     ],
+    cta: "See what's on the Radar",
   },
 } as const;
 
 /** Part 4 — opportunity pages. */
 export const opportunity = {
   cta: {
-    apply: "Apply at official source",
-    save: "Save this opportunity",
-    saved: "Saved",
+    apply: "Apply on official programme page",
+    save: "Put this on your Radar",
+    saved: "On your Radar",
     remind: "Get deadline reminder",
     similar: "Find more like this",
     share: "Share",
@@ -238,16 +238,16 @@ export const opportunity = {
     fullDetails: "See full details",
   },
   sections: {
-    overview: "Overview",
-    funding: "Funding",
-    eligibility: "Eligibility",
-    whoCanApply: "Who can apply",
-    benefits: "Benefits",
-    applicationProcess: "Application process",
-    documents: "Required documents",
-    selection: "Selection process",
+    overview: "What is it?",
+    funding: "What could you get?",
+    eligibility: "Who is it for?",
+    whoCanApply: "Who can apply?",
+    benefits: "What does the programme offer?",
+    applicationProcess: "How to apply",
+    documents: "What should you prepare?",
+    selection: "What should you know?",
     dates: "Important dates",
-    source: "Official source",
+    source: "Official programme page",
     similar: "Similar opportunities",
   },
   related: {
@@ -260,10 +260,8 @@ export const opportunity = {
     lastUpdated: "Last updated",
     prompt: "Something incorrect?",
   },
-  verifiedTooltip:
-    "Reviewed by FundRadar. Source verified against the official programme page.",
-  disclaimer:
-    "Information on FundRadar is collected from publicly available official sources and reviewed before publication. Details may change — always verify with the official programme page before applying.",
+  verifiedTooltip: "Linked to the official programme page.",
+  disclaimer: "Programme details can change. Check the official programme page before applying.",
   locked: {
     label: "See full eligibility, application details and benefits.",
     cta: "See full details",
@@ -299,7 +297,7 @@ export const search = {
   },
   sort: {
     newest: "Newest",
-    closing: "Closing soon",
+    closing: "Closing Soon",
     largest: "Largest funding",
     updated: "Recently updated",
   },
@@ -311,7 +309,7 @@ export const search = {
   },
   emptyCategory: {
     headline: (name: string) => `No active opportunities in ${name} right now.`,
-    body: "We're scanning for new opportunities in this space. Get on the radar and we'll send you the signal when something opens.",
+    body: "New opportunities keep appearing. Get on the radar and we'll let you know when something opens in this space.",
     cta: "Get notified when something opens",
   },
 } as const;
@@ -319,8 +317,8 @@ export const search = {
 /** Part 7 — lead capture. */
 export const leadCapture = {
   general: {
-    headline: "Want us to keep finding the signal for you?",
-    body: "Startup funding is scattered. We scan government portals, incubators, corporates and ecosystem organisations so you don't have to.",
+    headline: "Let us keep an eye out while you keep building.",
+    body: "Get a short selection of new opportunities, approaching deadlines and programmes worth a look.",
     prompt: "Tell us where to send the signal:",
     bullets: [
       "New grants and funding programmes",
@@ -329,17 +327,17 @@ export const leadCapture = {
       "Competitions and awards",
       "Deadline changes and extensions",
     ],
-    footnote: "Plus a weekly digest of what's worth paying attention to.",
-    cta: "Send me the signal",
+    footnote: "One useful update each week.",
+    cta: "Get the Weekly Radar",
   },
   contextual: (categoryName: string) => ({
     headline: `Looking for ${categoryName} opportunities?`,
-    body: `We'll keep scanning for new ${categoryName} grants, programmes and funding calls — and send you the ones worth your attention.`,
+    body: `We'll send you new ${categoryName} grants, programmes and funding calls that may be worth your attention.`,
     cta: "Keep me on the radar",
   }),
   afterViewing: {
     headline: "Want more opportunities like this?",
-    body: "Tell us where to send them. We'll keep scanning for relevant funding and startup programmes while you get back to building.",
+    body: "Tell us where to send them, then get back to building.",
     cta: "Send me similar opportunities",
   },
   microReward: (count: number, categoryName: string) => ({
@@ -367,7 +365,7 @@ export const leadCapture = {
   },
   confirmation: {
     headline: "You're on the radar.",
-    body: "We'll keep scanning for relevant opportunities and send you the signal.",
+    body: "We'll send you relevant opportunities and approaching deadlines.",
     handoff: "Now, here's the information you were looking for.",
   },
 } as const;
@@ -394,14 +392,14 @@ export const profiling = {
 /** Part 9 — user dashboard. */
 export const dashboard = {
   sections: {
-    signal: "Your signal",
+    signal: "Worth a Look",
     signalHint: "Recommended opportunities based on your interests",
-    saved: "Saved",
-    savedHint: "Opportunities you've saved",
-    closing: "Closing soon",
-    closingHint: "Your saved opportunities with approaching deadlines",
-    new: "New on the radar",
-    newHint: "Recently published opportunities matching your interests",
+    saved: "On your Radar",
+    savedHint: "Opportunities you want to keep in view",
+    closing: "Closing Soon",
+    closingHint: "Opportunities on your Radar with approaching deadlines",
+    new: "New on the Radar",
+    newHint: "Recently added opportunities matching your interests",
     categories: "Your categories",
     alerts: "Alerts",
     alertsHint: "Your notification preferences",
@@ -410,8 +408,8 @@ export const dashboard = {
   },
   empty: {
     saved: {
-      headline: "No saved opportunities yet.",
-      body: "When you find something worth tracking, save it here.",
+      headline: "Nothing on your Radar yet.",
+      body: "When you find something worth tracking, put it on your Radar.",
       cta: "Browse open opportunities",
     },
     recommendations: {
@@ -425,7 +423,7 @@ export const dashboard = {
       cta: "Choose categories",
     },
   },
-  savedTabs: ["All", "Saved", "Interested", "Applied", "Not relevant"],
+  savedTabs: ["All", "On your Radar", "Interested", "Applied", "Not relevant"],
   noteePlaceholder:
     'Add a note — e.g. "Check eligibility for DPIIT requirement"',
   greeting: (name: string, count: number) =>
@@ -434,21 +432,21 @@ export const dashboard = {
       : `Welcome back, ${name}.`,
 } as const;
 
-/** Part 10 — the Weekly Signal. */
+/** Part 10 — the Weekly Radar. */
 export const weeklySignal = {
-  productName: "The Weekly Signal",
-  eyebrow: "THE WEEKLY SIGNAL",
-  headline: "The signal, delivered once a week.",
+  productName: "The Weekly Radar",
+  eyebrow: "THE WEEKLY RADAR",
+  headline: "Let us keep an eye out while you keep building.",
   body: "New grants. Incubation calls. CSR funding. Accelerators. Competitions. Deadline changes.",
   body2:
-    "A short, useful scan of what opened, what's closing and what changed — so you don't have to spend the week checking every source.",
-  cta: "Send me the Weekly Signal",
+    "A short weekly selection of new opportunities, approaching deadlines and programmes worth a look.",
+  cta: "Get the Weekly Radar",
   supporting:
     "Choose the kinds of opportunities you care about. We'll sharpen the signal over time.",
   preferences: {
     headline: "What kind of signal do you want?",
     subline:
-      "Select the categories that matter to your startup. We'll prioritise these in your Weekly Signal.",
+      "Select the categories that matter to your startup. We'll prioritise these in your Weekly Radar.",
     cta: "Save preferences",
   },
   sections: {
@@ -463,12 +461,12 @@ export const weeklySignal = {
 
 /** Part 11 — action confirmations. */
 export const confirmations = {
-  saved: "Saved. You'll find it in your dashboard.",
-  unsaved: "Removed from saved.",
+  saved: "Added to your Radar. You'll find it in your dashboard.",
+  unsaved: "Removed from your Radar.",
   reminderSet: "Reminder set. We'll ping you before the deadline.",
   profileUpdated: "Updated. Your signal just got sharper.",
   preferencesSaved:
-    "Saved. We'll prioritise these categories in your Weekly Signal.",
+    "Saved. We'll prioritise these categories in your Weekly Radar.",
   errorReported: "Thanks. We'll check this and update the listing if needed.",
 } as const;
 
@@ -513,20 +511,19 @@ export const reportError = {
 /** Part 14 — SEO. */
 export const seo = {
   home: {
-    title:
-      "FundRadar — Startup Grants, Funding Programs & Opportunities | Signal, Not Noise",
+    title: "FundRadar — Curated Opportunities for Founders | Signal, Not Noise",
     description:
-      "Find grants, seed funds, incubation programs, CSR funding, accelerators and startup opportunities — reviewed, organised and easier to act on. FundRadar by Merstra.",
+      "Find grants, funding programmes, incubators, accelerators, corporate opportunities and competitions curated for founders. FundRadar by Merstra.",
   },
   about: {
     title: "About FundRadar — Signal, Not Noise in Startup Funding | By Merstra",
     description:
-      "FundRadar finds, reviews and organises grants, funding programs and startup opportunities so founders can see what's relevant before they miss it. A Merstra initiative.",
+      "FundRadar brings grants, programmes and startup opportunities together so founders can spend less time searching and make better decisions. A Merstra initiative.",
   },
   opportunities: {
     title: "Open Startup Funding Opportunities | FundRadar",
     description:
-      "Browse open grants, seed funds, incubation programs, accelerators, CSR funding and competitions for startups. Reviewed before we publish. FundRadar by Merstra.",
+      "Browse open grants, seed funds, incubation programmes, accelerators, corporate opportunities and competitions for startups. FundRadar by Merstra.",
   },
   categories: {
     title: "Startup Funding Categories | FundRadar",
@@ -535,7 +532,7 @@ export const seo = {
   },
   category: (name: string, count: number) => ({
     title: `${name} — Startup Funding Opportunities | FundRadar`,
-    description: `Browse ${count} active ${name} ${count === 1 ? "opportunity" : "opportunities"} for startups. Grants, funding programs and support — reviewed and organised. FundRadar by Merstra.`,
+    description: `Browse ${count} active ${name} ${count === 1 ? "opportunity" : "opportunities"} for startups across funding, programmes and support. FundRadar by Merstra.`,
   }),
   opportunity: (input: {
     title: string;
@@ -549,7 +546,7 @@ export const seo = {
       input.summary.replace(/\s+/g, " ").trim(),
       input.amount ? `Funding up to ${input.amount}.` : null,
       input.deadline ? `Deadline: ${input.deadline}.` : null,
-      "View eligibility, application details and apply at the official source.",
+      "View eligibility, application details and apply on the official programme page.",
     ]
       .filter(Boolean)
       .join(" ")
@@ -624,16 +621,16 @@ export const admin = {
 export const cta = {
   register: "Get on the radar",
   submit: "Send me the signal",
-  subscribe: "Send me the Weekly Signal",
+  subscribe: "Get the Weekly Radar",
   signUp: "Get the signal",
   explore: "See what's open",
   learnMore: "See details",
   viewOfficial: "View official call",
-  recommended: "Worth a look",
-  urgent: "Closing soon",
+  recommended: "Worth a Look",
+  urgent: "Closing Soon",
   createAccount: "Get started",
   logIn: "Continue",
-  apply: "Apply at official source",
+  apply: "Apply on official programme page",
   viewMore: "See all",
   download: "Get the list",
   notify: "Keep me on the radar",
