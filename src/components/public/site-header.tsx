@@ -5,12 +5,9 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { brand, nav } from "@/content/copy";
 
-const LINKS = [
-  { href: "/opportunities", label: "Browse" },
-  { href: "/categories", label: "Categories" },
-  { href: "/opportunities?closing=7", label: "Closing soon" },
-];
+const LINKS = nav.links;
 
 export function SiteHeader({
   signedIn,
@@ -23,8 +20,8 @@ export function SiteHeader({
   const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
 
-  // "Browse" and "Closing soon" share a pathname, so a link carrying a query
-  // is only active when that query is actually applied.
+  // "Open opportunities" and "Closing soon" share a pathname, so a link
+  // carrying a query is only active when that query is actually applied.
   const isActive = (href: string) => {
     const [path, query] = href.split("?");
     if (pathname !== path) return false;
@@ -47,7 +44,7 @@ export function SiteHeader({
               <circle cx="8" cy="8" r="2" fill="currentColor" />
             </svg>
           </span>
-          FundRadar
+          {brand.name}
         </Link>
 
         <nav className="hidden items-center gap-7 md:flex" aria-label="Main">
@@ -85,7 +82,7 @@ export function SiteHeader({
             href={signedIn ? "/dashboard" : "/opportunities"}
             className="btn btn-primary btn-sm"
           >
-            {signedIn ? "My dashboard" : "Find funding"}
+            {signedIn ? nav.dashboardCta : nav.primaryCta}
           </Link>
           <button
             type="button"
@@ -103,7 +100,7 @@ export function SiteHeader({
         <nav className="page-shell border-t border-line py-3 md:hidden" aria-label="Main">
           <ul className="grid gap-0.5">
             {(signedIn
-              ? [...LINKS, { href: "/dashboard", label: "My dashboard" }]
+              ? [...LINKS, { href: "/dashboard", label: nav.dashboardCta }]
               : LINKS
             ).map((link) => (
               <li key={link.href}>

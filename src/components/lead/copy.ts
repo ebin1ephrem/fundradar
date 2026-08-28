@@ -1,4 +1,5 @@
 import type { GateSubject } from "./gate-context";
+import { leadCapture } from "@/content/copy";
 
 export type GateCopy = {
   eyebrow: string | null;
@@ -7,68 +8,73 @@ export type GateCopy = {
   cta: string;
 };
 
-const BENEFITS = [
-  "Grants",
-  "Incubation programmes",
-  "CSR funding",
-  "Accelerators",
-  "Seed funding",
-  "Startup competitions",
-];
+const BENEFITS = [...leadCapture.general.bullets];
 
 /**
- * The popup adapts to what the visitor is looking at. Every version leads with
- * what they get; none of them says "sign up", "register" or "create account".
+ * The popup adapts to what the visitor is looking at (content spec, Part 7).
+ * Every version leads with what they get; none of them says "sign up",
+ * "register" or "create account".
  */
 export function gateCopy(subject: GateSubject): GateCopy {
+  // Version 4 — the micro-reward shown above the form when we can count.
   const found =
     subject.count && subject.count > 0
-      ? `We found ${subject.count} active ${
-          subject.label ? `${subject.label} ` : ""
-        }funding ${subject.count === 1 ? "opportunity" : "opportunities"}.`
+      ? leadCapture.microReward(
+          subject.count,
+          subject.label ?? "funding",
+        ).headline
       : null;
 
   switch (subject.kind) {
+    // Version 3 — after viewing an opportunity.
     case "opportunity":
       return {
-        eyebrow: "Want more like this?",
-        headline: "Get opportunities like this one every week",
-        body: "We'll send you similar grants, programmes and funding calls as they open — plus a reminder before the deadlines you care about.",
-        cta: "Send me opportunities like this",
+        eyebrow: null,
+        headline: leadCapture.afterViewing.headline,
+        body: leadCapture.afterViewing.body,
+        cta: leadCapture.afterViewing.cta,
       };
 
-    case "founder":
+    // Version 2 — contextual, founder-category flavour.
+    case "founder": {
+      const c = leadCapture.contextual(subject.label ?? "startup");
       return {
         eyebrow: found,
-        headline: `Don't miss funding for ${subject.label ?? "founders like you"}`,
-        body: "Get the relevant grants, accelerators and startup programmes delivered as they open.",
-        cta: "Send me the list",
+        headline: subject.label
+          ? `Funding opportunities for ${subject.label.toLowerCase()}.`
+          : c.headline,
+        body: c.body,
+        cta: c.cta,
       };
+    }
 
-    case "category":
+    // Version 2 — contextual, category.
+    case "category": {
+      const c = leadCapture.contextual(subject.label ?? "startup");
+      return { eyebrow: found, headline: c.headline, body: c.body, cta: c.cta };
+    }
+
+    // Version 4 — micro-reward on a search that already returned results.
+    case "search": {
+      const m = leadCapture.microReward(
+        subject.count ?? 0,
+        subject.label ?? "matching",
+      );
       return {
         eyebrow: found,
-        headline: `Get new ${subject.label ?? "startup"} funding every week`,
-        body: `Newly announced grants, incubation programmes and funding calls relevant to ${
-          subject.label ? `${subject.label} founders` : "your startup"
-        }.`,
-        cta: "Send me the weekly list",
+        headline: found ? m.body : leadCapture.general.headline,
+        body: leadCapture.general.body,
+        cta: found ? m.cta : leadCapture.general.cta,
       };
+    }
 
-    case "search":
-      return {
-        eyebrow: found,
-        headline: "Get the full list, and new ones as they open",
-        body: "We'll keep looking for opportunities that match what you searched for and send them to you weekly.",
-        cta: "Send me matching opportunities",
-      };
-
+    // Version 1 — general.
     default:
       return {
         eyebrow: null,
-        headline: "Get startup funding opportunities curated for you",
-        body: "Finding the right grants takes time. Tell us where to send them and we'll keep track for you.",
-        cta: "Send me funding opportunities",
+        headline: leadCapture.general.headline,
+        body: leadCapture.general.body,
+        cta: leadCapture.general.cta,
       };
   }
 }

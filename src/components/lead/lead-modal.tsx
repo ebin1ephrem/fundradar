@@ -8,6 +8,7 @@ import { Field } from "@/components/ui/form";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { useLeadGate } from "./gate-context";
 import { BENEFITS, gateCopy } from "./copy";
+import { leadCapture } from "@/content/copy";
 
 export function LeadModal() {
   const { isOpen, close, subject, reason } = useLeadGate();
@@ -54,12 +55,22 @@ export function LeadModal() {
     >
       {done ? (
         <div className="px-8 py-16 text-center">
-          <p className="text-[40px] leading-none">🎉</p>
-          <h2 className="display-md mt-5">You&apos;re in</h2>
-          <p className="lede mx-auto mt-3 max-w-[42ch]">
+          <span
+            aria-hidden="true"
+            className="mx-auto grid size-12 place-items-center rounded-full bg-accent text-ink"
+          >
+            <Check className="size-6" strokeWidth={2.4} />
+          </span>
+          <h2 className="display-md mt-5">
+            {leadCapture.confirmation.headline}
+          </h2>
+          <p className="lede mx-auto mt-3 max-w-[46ch]">
+            {leadCapture.confirmation.body}
+          </p>
+          <p className="mx-auto mt-3 max-w-[46ch] text-[14px] text-muted">
             {subject.kind === "opportunity"
-              ? "The full details are unlocked below — and we&apos;ll send you opportunities like this every week."
-              : "Your weekly funding list starts this week, along with reminders before important deadlines."}
+              ? leadCapture.confirmation.handoff
+              : null}
           </p>
         </div>
       ) : (
@@ -74,7 +85,7 @@ export function LeadModal() {
                 <p className="pill pill-accent mb-5">{copy.eyebrow}</p>
               ) : null}
               <p className="text-[13px] tracking-[0.08em] text-on-dark-muted uppercase">
-                Every week
+                {leadCapture.general.prompt}
               </p>
               <ul className="mt-5 grid gap-2.5">
                 {BENEFITS.map((benefit) => (
@@ -88,8 +99,7 @@ export function LeadModal() {
               </ul>
             </div>
             <p className="relative text-[13px] leading-relaxed text-on-dark-muted">
-              Newly announced programmes, deadline extensions and the ones
-              closing soon — curated, not scraped and dumped.
+              {leadCapture.general.footnote}
             </p>
           </div>
 
@@ -133,7 +143,11 @@ export function LeadModal() {
                 </p>
               ) : null}
 
-              <Field label="Name" htmlFor="lead-name" error={state.fieldErrors?.name}>
+              <Field
+                label={leadCapture.fields.name}
+                htmlFor="lead-name"
+                error={state.fieldErrors?.name}
+              >
                 <input
                   id="lead-name"
                   name="name"
@@ -144,7 +158,11 @@ export function LeadModal() {
                 />
               </Field>
 
-              <Field label="Email" htmlFor="lead-email" error={state.fieldErrors?.email}>
+              <Field
+                label={leadCapture.fields.email}
+                htmlFor="lead-email"
+                error={state.fieldErrors?.email}
+              >
                 <input
                   id="lead-email"
                   name="email"
@@ -157,10 +175,10 @@ export function LeadModal() {
               </Field>
 
               <Field
-                label="WhatsApp number"
+                label={leadCapture.fields.whatsapp}
                 htmlFor="lead-whatsapp"
                 error={state.fieldErrors?.whatsapp}
-                hint="For urgent deadline reminders and important funding alerts."
+                hint={leadCapture.fields.whatsappHint}
               >
                 <input
                   id="lead-whatsapp"
@@ -173,7 +191,11 @@ export function LeadModal() {
                 />
               </Field>
 
-              <Field label="Startup name" htmlFor="lead-startup" hint="Optional.">
+              <Field
+                label={leadCapture.fields.startup}
+                htmlFor="lead-startup"
+                hint="Optional."
+              >
                 <input
                   id="lead-startup"
                   name="startupName"
@@ -191,11 +213,16 @@ export function LeadModal() {
                 {copy.cta}
               </SubmitButton>
 
-              <p className="text-[12px] leading-relaxed text-muted">
-                By continuing you&apos;re asking us to send you relevant startup
-                funding opportunities and deadline alerts by email and WhatsApp.
-                You can change what you hear about, or stop either channel, at
-                any time.
+              <p className="flex items-start gap-2 text-[12px] leading-relaxed text-muted">
+                <Check
+                  className="mt-[2px] size-3.5 shrink-0 text-ink"
+                  strokeWidth={2.4}
+                  aria-hidden="true"
+                />
+                <span>
+                  {leadCapture.consent.email} You can change what you hear
+                  about, or stop either channel, at any time.
+                </span>
               </p>
             </form>
           </div>

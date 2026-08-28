@@ -24,6 +24,14 @@ import { getViewer } from "@/lib/leads/identity";
 import { resolveGate } from "@/lib/gating";
 import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
+import { brand, opportunity as oppCopy, seo } from "@/content/copy";
+import {
+  JsonLd,
+  breadcrumbLd,
+  opportunityLd,
+} from "@/components/public/structured-data";
+
+const SITE = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 // Deliberately dynamic: a cached page showing "3 days left" when the deadline
 // has passed is exactly the failure that loses a funding directory its users.
@@ -38,14 +46,37 @@ export async function generateMetadata({
   const opportunity = await getPublishedOpportunity(slug);
   if (!opportunity) return { title: "Opportunity not found" };
 
-  const title = opportunity.seoTitle ?? `${opportunity.title} — ${opportunity.providerName}`;
-  const description = opportunity.seoDescription ?? opportunity.shortDescription;
+  const fallback = seo.opportunity({
+    title: opportunity.title,
+    provider: opportunity.providerName,
+    summary: opportunity.shortDescription,
+    amount: fundingRangeLabel(
+      opportunity.fundingMin?.toString() ?? null,
+      opportunity.fundingMax?.toString() ?? null,
+      opportunity.currency,
+      opportunity.fundingAmountText,
+    ),
+    deadline: opportunity.isRollingDeadline
+      ? "Rolling"
+      : opportunity.applicationDeadline
+        ? formatDate(opportunity.applicationDeadline)
+        : null,
+  });
+
+  const title = opportunity.seoTitle ?? fallback.title;
+  const description = opportunity.seoDescription ?? fallback.description;
 
   return {
     title,
     description,
     alternates: { canonical: `/opportunities/${opportunity.slug}` },
-    openGraph: { title, description, type: "article" },
+    openGraph: {
+      title,
+      description,
+      url: `/opportunities/${opportunity.slug}`,
+      siteName: brand.lockup,
+      type: "article",
+    },
   };
 }
 
@@ -103,6 +134,37 @@ export default async function OpportunityPage({
 
   return (
     <>
+      <JsonLd
+        data={opportunityLd(SITE, {
+          slug: opportunity.slug,
+          title: opportunity.title,
+          shortDescription: opportunity.shortDescription,
+          providerName: opportunity.providerName,
+          officialSourceUrl: opportunity.officialSourceUrl,
+          applicationUrl: opportunity.applicationUrl,
+          applicationDeadline: opportunity.applicationDeadline,
+          applicationOpenDate: opportunity.applicationOpenDate,
+          fundingMin: opportunity.fundingMin?.toString() ?? null,
+          fundingMax: opportunity.fundingMax?.toString() ?? null,
+          currency: opportunity.currency,
+          updatedAt: opportunity.updatedAt,
+        })}
+      />
+      <JsonLd
+        data={breadcrumbLd(SITE, [
+          { name: "Home", path: "/" },
+          { name: "Open opportunities", path: "/opportunities" },
+          ...(opportunityTypes[0]
+            ? [
+                {
+                  name: opportunityTypes[0].category.name,
+                  path: `/categories/${opportunityTypes[0].category.slug}`,
+                },
+              ]
+            : []),
+          { name: opportunity.title, path: `/opportunities/${opportunity.slug}` },
+        ])}
+      />
       <LeadGateSubject
         subject={{
           kind: "opportunity",
@@ -235,7 +297,7 @@ export default async function OpportunityPage({
                       opportunityId={opportunity.id}
                       href={opportunity.applicationUrl}
                     >
-                      Apply officially
+                      {oppCopy.cta.apply}
                       <ArrowUpRight className="size-4" strokeWidth={1.8} />
                     </ApplyLink>
                   ) : null}
@@ -491,9 +553,7 @@ export default async function OpportunityPage({
                 <FactRow label="Last updated" value={formatDate(opportunity.updatedAt)} />
               </dl>
               <p className="mt-4 text-[13px] leading-relaxed text-muted">
-                Checked by our team against the provider&apos;s own page. Deadlines
-                and terms can change without notice — always confirm on the
-                official source before applying.
+                {oppCopy.disclaimer}
               </p>
               {opportunity.contactEmail ? (
                 <p className="mt-2 text-[13px] text-muted">
@@ -506,6 +566,15 @@ export default async function OpportunityPage({
                   </a>
                 </p>
               ) : null}
+              <p className="mt-4 border-t border-line pt-3 text-[13px] text-muted">
+                {oppCopy.trustFooter.prompt}{" "}
+                <Link
+                  href={`/report?o=${opportunity.slug}`}
+                  className="underline underline-offset-2 hover:text-ink"
+                >
+                  {oppCopy.cta.report}
+                </Link>
+              </p>
             </div>
           </DetailSection>
         </div>
@@ -513,14 +582,19 @@ export default async function OpportunityPage({
         {similar.length ? (
           <section className="mt-14 border-t border-line pt-10">
             <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-              <h2 className="display-md">Similar opportunities</h2>
+              <div>
+                <h2 className="display-md">{oppCopy.related.headline}</h2>
+                <p className="mt-1.5 text-[14px] text-muted">
+                  {oppCopy.related.subline}
+                </p>
+              </div>
               <Link
                 href={`/opportunities${
                   opportunityTypes[0] ? `?c=${opportunityTypes[0].category.slug}` : ""
                 }`}
                 className="text-[14px] text-muted underline underline-offset-2 hover:text-ink"
               >
-                See more like this
+                {oppCopy.cta.similar}
               </Link>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

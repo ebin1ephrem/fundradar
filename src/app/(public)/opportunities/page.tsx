@@ -11,12 +11,19 @@ import { SortSelect } from "@/components/public/sort-select";
 import { Pagination } from "@/components/public/pagination";
 import { LeadGateSubject } from "@/components/lead/gate-context";
 import { savedOpportunityIds } from "@/lib/leads/identity";
+import { brand, search as searchCopy, seo } from "@/content/copy";
 
 export const metadata: Metadata = {
-  title: "Browse startup funding opportunities",
-  description:
-    "Search and filter grants, incubation programmes, accelerators, CSR funding and competitions for startups. Every opportunity links to its official source.",
+  title: seo.opportunities.title,
+  description: seo.opportunities.description,
   alternates: { canonical: "/opportunities" },
+  openGraph: {
+    title: seo.opportunities.title,
+    description: seo.opportunities.description,
+    url: "/opportunities",
+    siteName: brand.lockup,
+    type: "website",
+  },
 };
 
 export const dynamic = "force-dynamic";
@@ -51,7 +58,7 @@ export default async function OpportunitiesPage({
   const activeCount = activeFilterCount(params);
   const heading = filters.q
     ? `Results for “${filters.q}”`
-    : "Startup funding opportunities";
+    : "Open opportunities";
 
   return (
     <>
@@ -76,15 +83,15 @@ export default async function OpportunitiesPage({
                 </Link>
               </li>
               <li aria-hidden="true">/</li>
-              <li className="text-ink">Browse</li>
+              <li className="text-ink">Open opportunities</li>
             </ol>
           </nav>
 
           <h1 className="display-md max-w-[20ch]">{heading}</h1>
           <p className="lede mt-3 max-w-[58ch]">
-            {results.total.toLocaleString("en-IN")} published{" "}
-            {results.total === 1 ? "opportunity" : "opportunities"}, each linking
-            to the provider&apos;s own page.
+            {results.total.toLocaleString("en-IN")}{" "}
+            {results.total === 1 ? "opportunity" : "opportunities"} — reviewed
+            before we publish, each linking to the provider&apos;s own page.
           </p>
 
           <div className="mt-7 max-w-[680px]">
@@ -115,7 +122,7 @@ export default async function OpportunitiesPage({
                       href={`${BASE}${buildQuery({ q: params.q }, {})}`}
                       className="text-[12.5px] text-muted underline underline-offset-2 hover:text-ink"
                     >
-                      Clear all
+                      {searchCopy.filters.clear}
                     </Link>
                   ) : null}
                 </div>
@@ -151,7 +158,10 @@ export default async function OpportunitiesPage({
             </div>
 
             {results.hits.length === 0 ? (
-              <EmptyState hasFilters={activeCount > 0 || Boolean(filters.q)} />
+              <EmptyState
+                hasFilters={activeCount > 0 || Boolean(filters.q)}
+                query={filters.q}
+              />
             ) : (
               <OpportunityGrid hits={results.hits} savedIds={savedIds} />
             )}
@@ -170,21 +180,39 @@ export default async function OpportunitiesPage({
   );
 }
 
-function EmptyState({ hasFilters }: { hasFilters: boolean }) {
+function EmptyState({
+  hasFilters,
+  query,
+}: {
+  hasFilters: boolean;
+  query?: string;
+}) {
   return (
     <div className="rounded-[12px] border border-dashed border-line-strong px-6 py-16 text-center">
       <p className="text-[17px] font-medium tracking-[-0.02em]">
-        {hasFilters ? "Nothing matches that combination" : "No opportunities published yet"}
+        {query
+          ? searchCopy.noResults.headline(query)
+          : hasFilters
+            ? "No signal for that combination — yet."
+            : "Nothing published yet."}
       </p>
-      <p className="mx-auto mt-2 max-w-[46ch] text-[14px] text-muted">
+      <p className="mx-auto mt-2 max-w-[52ch] text-[14px] leading-relaxed text-muted">
         {hasFilters
-          ? "Try removing a filter, or widening the funding range or deadline window."
-          : "Published opportunities will appear here as soon as they clear review."}
+          ? searchCopy.noResults.body
+          : "Opportunities appear here once they have been reviewed and published."}
       </p>
       {hasFilters ? (
-        <Link href="/opportunities" className="btn btn-secondary mt-6">
-          Clear all filters
-        </Link>
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
+          <Link href="/categories" className="btn btn-secondary">
+            {searchCopy.noResults.browseCta}
+          </Link>
+          <Link href="/dashboard/alerts" className="btn btn-primary">
+            {searchCopy.noResults.radarCta}
+          </Link>
+          <Link href="/opportunities" className="btn btn-secondary">
+            {searchCopy.filters.clear}
+          </Link>
+        </div>
       ) : null}
     </div>
   );

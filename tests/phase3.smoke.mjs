@@ -35,20 +35,20 @@ try {
   check("no popup on a first opportunity view",
     !(await page.evaluate(() => Boolean(document.querySelector("dialog[open]")))));
   check("the official application link is withheld until identified",
-    !(await page.$('a:has-text("Apply officially")')));
+    !(await page.$('a:has-text("Apply at official source")')));
 
   // --- Clicking a locked action opens the popup -------------------------
-  await page.getByRole("button", { name: "Show me" }).first().click();
+  await page.getByRole("button", { name: "See full details" }).first().click();
   await page.waitForSelector("dialog[open]", { timeout: 10000 });
   const modal = await page.textContent("dialog");
   check("clicking a locked section opens the capture popup", modal.length > 0);
   check("popup leads with the reward, not with signing up",
-    /Get opportunities like this one every week/.test(modal) &&
+    /Want more opportunities like this\?/.test(modal) &&
     !/sign up|create an account|register/i.test(modal));
   check("popup asks only for the four fields",
     (await page.$$("dialog input:not([type=hidden])")).length === 4);
   check("popup explains why it wants a WhatsApp number",
-    modal.includes("urgent deadline reminders"));
+    modal.includes("Get deadline alerts and urgent funding updates."));
   check("popup states what submitting consents to",
     modal.includes("relevant startup funding opportunities and deadline alerts"));
 
@@ -73,11 +73,11 @@ try {
   await page.fill("#lead-startup", `Acme Robotics ${RUN}`);
   await page.getByRole("button", { name: /Send me|Get my/i }).click();
   await page.waitForFunction(
-    () => document.body.innerText.includes("You're in") ||
+    () => document.body.innerText.includes("You're on the radar") ||
           document.body.innerText.includes("You’re in"),
     null, { timeout: 20000 });
   check("submitting gives an immediate reward, not a bare thank you",
-    (await body()).includes("unlocked"));
+    (await body()).includes("Now, here's the information you were looking for."));
 
   // Wait for the in-place refresh rather than guessing at a duration.
   const unlockedInPlace = await page
@@ -93,7 +93,7 @@ try {
   check("the section they wanted unlocks in place, on the same page",
     unlockedInPlace && page.url().includes("helix-biotech"), page.url());
   check("the official application link appears once identified",
-    Boolean(await page.$('a:has-text("Apply officially")')));
+    Boolean(await page.$('a:has-text("Apply at official source")')));
 
   // --- Remembered -------------------------------------------------------
   await go("/opportunities/kaveri-state-seed-fund");
@@ -119,7 +119,7 @@ try {
   // --- Dashboard --------------------------------------------------------
   await go("/dashboard");
   const dash = await body();
-  check("dashboard shows recommendations", dash.includes("Recommended for you"));
+  check("dashboard shows recommendations", dash.includes("Your signal"));
   check("recommendations explain what they are based on",
     /Based on your interest in|Newest first while we learn/.test(dash));
   check("dashboard shows the categories it learned", dash.includes("Your categories"));

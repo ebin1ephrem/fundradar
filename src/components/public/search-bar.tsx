@@ -1,12 +1,13 @@
 import { Search } from "lucide-react";
 import type { RawParams } from "@/lib/search/params";
+import { search as searchCopy } from "@/content/copy";
 
 /** A plain GET form — no JavaScript needed to search. */
 export function SearchBar({
   action = "/opportunities",
   params,
   defaultValue,
-  placeholder = "Search grants, sectors or funding programmes",
+  placeholder = searchCopy.placeholder,
   size = "md",
 }: {
   action?: string;

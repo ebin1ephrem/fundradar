@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { dashboard as dash, weeklySignal } from "@/content/copy";
 import { requireLead } from "@/lib/leads/identity";
 import { AlertsForm } from "./form";
 
@@ -45,11 +46,9 @@ export default async function AlertsPage() {
 
   return (
     <div className="max-w-[720px]">
-      <h2 className="display-md">Alerts</h2>
-      <p className="lede mt-2">
-        What you hear about, and how. Change it whenever you like — or turn
-        everything off in one click.
-      </p>
+      <h2 className="display-md">{weeklySignal.preferences.headline}</h2>
+      <p className="lede mt-2">{weeklySignal.preferences.subline}</p>
+      <p className="mt-2 text-[14px] text-muted">{dash.sections.alertsHint}.</p>
 
       <div className="mt-8">
         <AlertsForm

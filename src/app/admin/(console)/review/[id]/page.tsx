@@ -14,6 +14,7 @@ import { cn, formatDate } from "@/lib/utils";
 import { OpportunityForm } from "../../opportunities/opportunity-form";
 import { saveOpportunityAction } from "../../opportunities/actions";
 import { approveAction, saveReviewNotesAction } from "../actions";
+import { admin as adminCopy } from "@/content/copy";
 import { SourcePanel } from "./source-panel";
 import {
   ExtractedFields,
@@ -224,7 +225,9 @@ export default async function ReviewOpportunityPage({
               />
 
               <section className="card h-fit p-4">
-                <h2 className="mb-2.5 text-[13px] font-medium">Before publishing</h2>
+                <h2 className="mb-2.5 text-[13px] font-medium">
+                  {adminCopy.checklist.heading}
+                </h2>
                 <ul className="grid gap-1">
                   {requirements
                     .filter((r) => r.blocking)
@@ -255,7 +258,7 @@ export default async function ReviewOpportunityPage({
                       disabled={blockers.length > 0}
                       className="btn btn-accent btn-sm w-full"
                     >
-                      Approve &amp; publish
+                      {adminCopy.actions.publish}
                     </button>
                   </form>
                   {blockers.length ? (

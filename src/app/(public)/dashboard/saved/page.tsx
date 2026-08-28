@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { dashboard as dash } from "@/content/copy";
 import type { SavedStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireLead } from "@/lib/leads/identity";
@@ -92,14 +93,14 @@ export default async function SavedPage({
       {rows.length === 0 ? (
         <div className="rounded-[12px] border border-dashed border-line-strong px-6 py-16 text-center">
           <p className="text-[17px] font-medium tracking-[-0.02em]">
-            Nothing saved here yet
+            {dash.empty.saved.headline}
           </p>
-          <p className="mx-auto mt-2 max-w-[46ch] text-[14px] text-muted">
-            Save an opportunity from anywhere on the site and it lands here, with
-            room for your own notes.
+          <p className="mx-auto mt-2 max-w-[52ch] text-[14px] leading-relaxed text-muted">
+            {dash.empty.saved.body} You&apos;ll be able to add notes, track
+            deadlines and keep everything in one place.
           </p>
           <Link href="/opportunities" className="btn btn-secondary mt-6">
-            Find opportunities
+            {dash.empty.saved.cta}
           </Link>
         </div>
       ) : (

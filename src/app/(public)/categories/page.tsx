@@ -5,12 +5,19 @@ import { prisma } from "@/lib/prisma";
 import { search } from "@/lib/search";
 import { Icon } from "@/components/admin/icon";
 import { CATEGORY_TYPE_HINT, CATEGORY_TYPE_LABEL } from "@/lib/validation/category";
+import { brand, home, seo } from "@/content/copy";
 
 export const metadata: Metadata = {
-  title: "All funding categories",
-  description:
-    "Every way to browse startup funding on FundRadar — by opportunity type, industry, startup stage, founder category, provider and location.",
+  title: seo.categories.title,
+  description: seo.categories.description,
   alternates: { canonical: "/categories" },
+  openGraph: {
+    title: seo.categories.title,
+    description: seo.categories.description,
+    url: "/categories",
+    siteName: brand.lockup,
+    type: "website",
+  },
 };
 
 export const dynamic = "force-dynamic";
@@ -45,14 +52,14 @@ export default async function CategoriesIndexPage() {
     <>
       <div className="border-b border-line">
         <div className="page-shell py-12 lg:py-16">
-          <p className="eyebrow">Browse</p>
-          <h1 className="display-lg mt-3 max-w-[16ch]">
-            Every way to find funding.
+          <p className="eyebrow">{home.categories.eyebrow}</p>
+          <h1 className="display-lg mt-3 max-w-[18ch]">
+            {home.categories.headline}
           </h1>
           <p className="lede mt-4 max-w-[58ch]">
-            Opportunities are classified across six independent dimensions, so a
-            single programme can be a grant, a climate programme and an
-            incubation opportunity at the same time.
+            {home.categories.subline} One opportunity can be several things at
+            once — a CSR-backed programme might also be a grant, an incubation
+            call and ClimateTech.
           </p>
         </div>
       </div>

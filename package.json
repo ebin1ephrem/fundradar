@@ -12,13 +12,17 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "smoke": "node tests/phase1.smoke.mjs && node tests/phase2.smoke.mjs && node tests/phase3.smoke.mjs",
+    "smoke": "node tests/phase1.smoke.mjs && node tests/phase2.smoke.mjs && node tests/phase3.smoke.mjs && node tests/phase6.smoke.mjs",
     "check:search": "tsx --tsconfig tsconfig.scripts.json tests/search.check.ts",
     "db:fixtures": "tsx prisma/dev-fixtures.ts",
     "smoke:public": "node tests/phase2.smoke.mjs",
     "smoke:leads": "node tests/phase3.smoke.mjs",
     "check:ingestion": "tsx --tsconfig tsconfig.scripts.json tests/ingestion.check.ts",
-    "check:crawler": "tsx --tsconfig tsconfig.scripts.json tests/crawler.check.ts"
+    "check:crawler": "tsx --tsconfig tsconfig.scripts.json tests/crawler.check.ts",
+    "test:cleanup": "tsx --tsconfig tsconfig.scripts.json tests/cleanup.ts",
+    "check:seed": "tsx --tsconfig tsconfig.scripts.json tests/seed.check.ts",
+    "smoke:ingest": "node tests/phase4.smoke.mjs; npm run test:cleanup",
+    "check": "npm run check:search && npm run check:ingestion && npm run check:crawler && npm run check:seed"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",

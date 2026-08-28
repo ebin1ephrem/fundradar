@@ -21,7 +21,7 @@ export const SORT_LABEL: Record<SortKey, string> = {
   closing: "Closing soon",
   largest: "Largest funding",
   updated: "Recently updated",
-  popular: "Most popular",
+  popular: "Most viewed",
 };
 
 export type OpportunityFilters = {

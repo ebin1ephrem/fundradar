@@ -8,10 +8,13 @@ import { OpportunityCard, OpportunityGrid } from "@/components/public/opportunit
 import { SearchBar } from "@/components/public/search-bar";
 import { Icon } from "@/components/admin/icon";
 import { CATEGORY_TYPE_LABEL } from "@/lib/validation/category";
-import { CLOSING_SOON_DAYS } from "@/lib/opportunity-status";
 import { LeadGateSubject } from "@/components/lead/gate-context";
 import { TrackView } from "@/components/lead/tracker";
 import { savedOpportunityIds } from "@/lib/leads/identity";
+import { brand, home, search as searchCopy, seo } from "@/content/copy";
+import { JsonLd, breadcrumbLd } from "@/components/public/structured-data";
+
+const SITE = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 export const dynamic = "force-dynamic";
 
@@ -38,17 +41,26 @@ export async function generateMetadata({
   const category = await getCategory(slug);
   if (!category) return { title: "Category not found" };
 
-  const title = category.seoTitle ?? `${category.name} for startups`;
+  const count = await search
+    .search({ categorySlugs: [category.slug], perPage: 1 })
+    .then((r) => r.total);
+  const fallback = seo.category(category.name, count);
+
+  const title = category.seoTitle ?? fallback.title;
   const description =
-    category.seoDescription ??
-    category.description ??
-    `Browse verified ${category.name.toLowerCase()} opportunities for startups, with deadlines and links to every official source.`;
+    category.seoDescription ?? category.description ?? fallback.description;
 
   return {
     title,
     description,
     alternates: { canonical: `/categories/${category.slug}` },
-    openGraph: { title, description },
+    openGraph: {
+      title,
+      description,
+      url: `/categories/${category.slug}`,
+      siteName: brand.lockup,
+      type: "website",
+    },
   };
 }
 
@@ -79,6 +91,21 @@ export default async function CategoryPage({
 
   return (
     <>
+      <JsonLd
+        data={breadcrumbLd(SITE, [
+          { name: "Home", path: "/" },
+          { name: "Categories", path: "/categories" },
+          ...(category.parent
+            ? [
+                {
+                  name: category.parent.name,
+                  path: `/categories/${category.parent.slug}`,
+                },
+              ]
+            : []),
+          { name: category.name, path: `/categories/${category.slug}` },
+        ])}
+      />
       <LeadGateSubject
         subject={{
           kind: category.categoryType === "FOUNDER_TYPE" ? "founder" : "category",
@@ -171,21 +198,26 @@ export default async function CategoryPage({
         {count === 0 ? (
           <div className="rounded-[12px] border border-dashed border-line-strong px-6 py-16 text-center">
             <p className="text-[17px] font-medium tracking-[-0.02em]">
-              Nothing published in {category.name} yet
+              {searchCopy.emptyCategory.headline(category.name)}
             </p>
-            <p className="mx-auto mt-2 max-w-[46ch] text-[14px] text-muted">
-              This page fills in as opportunities in this category clear review.
+            <p className="mx-auto mt-2 max-w-[52ch] text-[14px] leading-relaxed text-muted">
+              {searchCopy.emptyCategory.body}
             </p>
-            <Link href="/opportunities" className="btn btn-secondary mt-6">
-              Browse everything
-            </Link>
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
+              <Link href="/dashboard/alerts" className="btn btn-primary">
+                {searchCopy.emptyCategory.cta}
+              </Link>
+              <Link href="/opportunities" className="btn btn-secondary">
+                {home.open.cta}
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="grid gap-14">
             {closingSoon.hits.length ? (
               <Section
-                title="Closing soon"
-                description={`Deadlines inside the next ${CLOSING_SOON_DAYS * 4} days.`}
+                title={home.closing.headline}
+                description={home.closing.subline}
                 href={`/opportunities?c=${category.slug}&closing=30`}
               >
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -197,8 +229,8 @@ export default async function CategoryPage({
             ) : null}
 
             <Section
-              title="Latest opportunities"
-              description={`Newly published in ${category.name}.`}
+              title={home.recent.headline}
+              description={`Recently reviewed and published in ${category.name}.`}
               href={`/opportunities?c=${category.slug}`}
             >
               <OpportunityGrid hits={latest.hits} savedIds={savedIds} />

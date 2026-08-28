@@ -129,9 +129,11 @@ try {
   check("an approve and publish control exists", Boolean(publish));
   if (publish && !(await publish.isDisabled())) {
     await publish.click();
-    await page.waitForURL(/\/admin\/review/, { timeout: 25000 });
+    // Wait for the redirect's own marker: the review detail page is already
+    // under /admin/review, so a path-shaped wait matches before the action runs.
+    await page.waitForURL(/[?&]published=/, { timeout: 25000 }).catch(() => {});
     check("publishing confirms it is now live",
-      (await body()).includes("live on the public site"));
+      (await body()).includes("live on the public site"), page.url());
   } else {
     check("publishing stays blocked until the record is complete", true,
       "gate held — checklist still outstanding");

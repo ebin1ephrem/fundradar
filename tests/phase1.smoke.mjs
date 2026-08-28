@@ -60,8 +60,9 @@ try {
   await page.waitForURL(/created=/, { timeout: 15000 });
   check("category created", (await page.textContent("body")).includes(`Defence Procurement ${RUN}`));
 
-  // 7. Create an opportunity
-  await page.goto(`${BASE}/admin/opportunities/new`, { waitUntil: "networkidle" });
+  // 7. Create an opportunity.
+  // /new is the method chooser since Phase 4; manual entry lives behind it.
+  await page.goto(`${BASE}/admin/opportunities/manual`, { waitUntil: "networkidle" });
   await page.fill("#title", `Climate Innovation Challenge ${RUN}`);
   await page.fill("#providerName", "National Innovation Foundation");
   await page.fill("#shortDescription", "Equity-free funding for climate startups building measurable decarbonisation technology in India.");
@@ -83,7 +84,10 @@ try {
   check("picker holds selections across dimensions",
     (await page.textContent("body")).includes("3 selected"));
   await page.getByRole("button", { name: "Save & publish" }).click();
-  await page.waitForURL(/\/admin\/opportunities\/(?!new)[a-z0-9]+/, { timeout: 25000 }).catch(() => {});
+  // The saved marker, not just the shape of the path: /manual, /new and
+  // /import are all static segments that a bare id pattern also matches.
+  await page.waitForURL(/\/admin\/opportunities\/[a-z0-9]+\?saved=/, { timeout: 25000 })
+    .catch(() => {});
   const detail = await page.textContent("body");
   if (!detail.includes("Published")) {
     console.log("DEBUG create:", detail.replace(/\s+/g, " ").slice(0, 500));
@@ -92,7 +96,7 @@ try {
   check("multi-dimension categories held", detail.includes("3 selected") || detail.includes("selected"));
 
   // 8. Publication gate blocks an incomplete record
-  await page.goto(`${BASE}/admin/opportunities/new`, { waitUntil: "networkidle" });
+  await page.goto(`${BASE}/admin/opportunities/manual`, { waitUntil: "networkidle" });
   await page.fill("#title", `Incomplete Programme Record ${RUN}`);
   await page.fill("#providerName", "Test Provider");
   await page.fill("#shortDescription", "A record deliberately missing eligibility and categories to test the publication gate.");

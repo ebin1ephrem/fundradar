@@ -8,14 +8,23 @@ import { publiclyVisible } from "@/lib/visibility";
 import { OpportunityCard } from "@/components/public/opportunity-card";
 import { SearchBar } from "@/components/public/search-bar";
 import { Icon } from "@/components/admin/icon";
-import { CLOSING_SOON_DAYS } from "@/lib/opportunity-status";
 import { savedOpportunityIds } from "@/lib/leads/identity";
+import { brand, home, search as searchCopy, seo, weeklySignal } from "@/content/copy";
+import { JsonLd, organisationLd, websiteLd } from "@/components/public/structured-data";
+
+const SITE = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
 export const metadata: Metadata = {
-  title: "FundRadar — Find grants and funding for your startup",
-  description:
-    "Search verified startup grants, incubation programmes, accelerators, CSR funding and competitions. Every opportunity links to its official source.",
+  title: seo.home.title,
+  description: seo.home.description,
   alternates: { canonical: "/" },
+  openGraph: {
+    title: seo.home.title,
+    description: seo.home.description,
+    url: "/",
+    siteName: brand.lockup,
+    type: "website",
+  },
 };
 
 export const dynamic = "force-dynamic";
@@ -49,6 +58,9 @@ export default async function HomePage() {
 
   return (
     <>
+      <JsonLd data={organisationLd(SITE)} />
+      <JsonLd data={websiteLd(SITE)} />
+
       {/* Hero ------------------------------------------------------------ */}
       <section className="relative overflow-hidden border-b border-line">
         <div
@@ -56,31 +68,21 @@ export default async function HomePage() {
           aria-hidden="true"
         />
         <div className="page-shell relative py-16 lg:py-28">
-          <p className="eyebrow">
-            {total.toLocaleString("en-IN")} verified opportunities
-          </p>
-          <h1 className="display-xl mt-4 max-w-[16ch]">
-            Find grants and funding for your startup.
+          <p className="eyebrow">{home.hero.eyebrow}</p>
+          <h1 className="display-xl mt-4 max-w-[19ch]">
+            {home.hero.headline}{" "}
+            <span className="text-muted">{home.hero.headlineSecond}</span>
           </h1>
 
-          <p className="lede mt-6 max-w-[54ch]">
-            Grants, incubation programmes, accelerators, CSR funding and
-            competitions — searchable in one place, with deadlines you can trust
-            and a link to every official source.
-          </p>
+          <p className="lede mt-6 max-w-[58ch]">{home.hero.subline}</p>
 
           <div className="mt-9 max-w-[720px]">
             <SearchBar size="lg" />
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13.5px] text-muted">
-            <span>Try:</span>
-            {[
-              { label: "DeepTech grants", href: "/opportunities?q=deeptech+grants" },
-              { label: "Women founder funding", href: "/opportunities?c=women-founders" },
-              { label: "Equity-free", href: "/opportunities?equityFree=1" },
-              { label: "Kerala", href: "/opportunities?state=Kerala" },
-            ].map((item) => (
+            <span>{home.search.chipsLabel}</span>
+            {searchCopy.chips.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -91,7 +93,11 @@ export default async function HomePage() {
             ))}
           </div>
 
-          <dl className="mt-12 grid max-w-[640px] grid-cols-2 gap-x-8 gap-y-6 border-t border-line pt-8 sm:grid-cols-4">
+          <p className="mt-6 text-[13.5px] text-muted">
+            {home.hero.supporting}
+          </p>
+
+          <dl className="mt-10 grid max-w-[640px] grid-cols-2 gap-x-8 gap-y-6 border-t border-line pt-8 sm:grid-cols-4">
             <Stat value={total} label="Opportunities" />
             <Stat value={providerCount} label="Providers" />
             <Stat value={equityFree.total} label="Equity-free" />
@@ -106,14 +112,16 @@ export default async function HomePage() {
           <div className="page-shell">
             <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
               <div>
-                <h2 className="display-lg max-w-[14ch]">Explore by category</h2>
-                <p className="lede mt-3 max-w-[46ch]">
-                  Every opportunity is classified across type, industry, stage
-                  and location — so you can narrow to exactly what fits.
+                <p className="eyebrow">{home.categories.eyebrow}</p>
+                <h2 className="display-lg mt-2.5 max-w-[18ch]">
+                  {home.categories.headline}
+                </h2>
+                <p className="lede mt-3 max-w-[48ch]">
+                  {home.categories.subline}
                 </p>
               </div>
               <Link href="/categories" className="btn btn-secondary">
-                View all categories
+                {home.categories.cta}
                 <ArrowRight className="size-4" strokeWidth={1.8} />
               </Link>
             </div>
@@ -159,10 +167,11 @@ export default async function HomePage() {
         <section className="section-y">
           <div className="page-shell">
             <Header
-              eyebrow="Act now"
-              title="Closing soon"
-              description={`Deadlines inside the next ${CLOSING_SOON_DAYS * 4} days.`}
+              eyebrow={home.closing.eyebrow}
+              title={home.closing.headline}
+              description={home.closing.subline}
               href="/opportunities?closing=30"
+              linkLabel={home.closing.cta}
             />
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {closingSoon.hits.map((hit) => (
@@ -172,6 +181,34 @@ export default async function HomePage() {
           </div>
         </section>
       ) : null}
+
+      {/* How it works ---------------------------------------------------- */}
+      <section id="how-it-works" className="section-y border-t border-line">
+        <div className="page-shell">
+          <p className="eyebrow">{home.howItWorks.eyebrow}</p>
+          <h2 className="display-lg mt-2.5 max-w-[16ch]">
+            {home.howItWorks.headline}
+          </h2>
+          <ol className="mt-9 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            {home.howItWorks.steps.map((step, i) => (
+              <li
+                key={step.title}
+                className="rounded-[12px] border border-line p-5"
+              >
+                <span className="font-display text-[13px] font-medium tabular-nums text-muted">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <p className="mt-3 text-[15.5px] font-medium tracking-[-0.02em]">
+                  {step.title}
+                </p>
+                <p className="mt-2 text-[13.5px] leading-relaxed text-muted">
+                  {step.body}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
 
       {/* How the database is kept honest --------------------------------- */}
       <section className="pb-4">
@@ -184,35 +221,28 @@ export default async function HomePage() {
             <div className="relative grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:items-start">
               <div>
                 <p className="text-[11px] font-semibold tracking-[0.09em] text-on-dark-muted uppercase">
-                  Why the deadlines are right
+                  {home.trust.eyebrow}
                 </p>
-                <h2 className="display-lg mt-4 max-w-[13ch] text-on-dark">
-                  A person checks every record.
+                <h2 className="display-lg mt-4 max-w-[16ch] text-on-dark">
+                  {home.trust.headline}
                 </h2>
-                <p className="mt-5 max-w-[44ch] text-[15px] leading-relaxed text-on-dark-muted">
-                  Software watches official sources and spots changes. It never
-                  publishes anything. Each opportunity, and every later change
-                  to it, is reviewed against the provider&apos;s own page before it
-                  reaches this site.
+                <p className="mt-5 max-w-[46ch] text-[15px] leading-relaxed text-on-dark-muted">
+                  {home.trust.body}
+                </p>
+                <p className="mt-4 max-w-[46ch] text-[15px] leading-relaxed text-on-dark-muted">
+                  {home.trust.body2}
                 </p>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
-                <Pillar
-                  icon={Waypoints}
-                  title="Official sources only"
-                  body="Every record links to the provider&apos;s own page. Nothing is copied from another directory."
-                />
-                <Pillar
-                  icon={ShieldCheck}
-                  title="Reviewed before publishing"
-                  body="Automated extraction is a draft. An admin verifies it before anyone sees it."
-                />
-                <Pillar
-                  icon={Timer}
-                  title="Watched for changes"
-                  body="Deadline moved? Funding changed? The change is detected, checked, then updated."
-                />
+                {home.trust.pillars.map((pillar, i) => (
+                  <Pillar
+                    key={pillar.title}
+                    icon={[Waypoints, ShieldCheck, Timer][i]}
+                    title={pillar.title}
+                    body={pillar.body}
+                  />
+                ))}
               </div>
             </div>
           </div>
@@ -224,10 +254,11 @@ export default async function HomePage() {
         <section className="section-y">
           <div className="page-shell">
             <Header
-              eyebrow="Fresh"
-              title="Recently added"
-              description="The newest programmes to clear review."
+              eyebrow={home.recent.eyebrow}
+              title={home.recent.headline}
+              description={home.recent.subline}
               href="/opportunities?sort=newest"
+              linkLabel={home.open.cta}
             />
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {recent.hits.map((hit) => (
@@ -242,6 +273,9 @@ export default async function HomePage() {
       <section className="border-t border-line bg-subtle py-14 lg:py-20">
         <div className="page-shell">
           <h2 className="display-md">Popular ways in</h2>
+          <p className="mt-2 text-[14.5px] text-muted">
+            Four routes founders take most often.
+          </p>
           <div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <Route
               href="/opportunities?provider=GOVERNMENT"
@@ -270,6 +304,34 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Weekly Signal / closing CTA ------------------------------------- */}
+      <section className="border-t border-line py-14 lg:py-20">
+        <div className="page-shell grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:items-center">
+          <div>
+            <p className="eyebrow">{weeklySignal.eyebrow}</p>
+            <h2 className="display-md mt-2.5 max-w-[18ch]">
+              {home.banner.headline}
+            </h2>
+            <p className="lede mt-4 max-w-[48ch]">{home.banner.subline}</p>
+            <p className="mt-4 max-w-[48ch] text-[14px] text-muted">
+              {weeklySignal.supporting}
+            </p>
+          </div>
+          <div className="rounded-[12px] border border-line bg-subtle p-7">
+            <p className="text-[16px] font-medium tracking-[-0.02em]">
+              {weeklySignal.headline}
+            </p>
+            <p className="mt-2 text-[14px] leading-relaxed text-muted">
+              {weeklySignal.body2}
+            </p>
+            <Link href="/dashboard/alerts" className="btn btn-primary mt-5">
+              {home.banner.cta}
+              <ArrowRight className="size-4" strokeWidth={1.8} />
+            </Link>
+          </div>
+        </div>
+      </section>
     </>
   );
 }
@@ -293,11 +355,13 @@ function Header({
   title,
   description,
   href,
+  linkLabel,
 }: {
   eyebrow: string;
   title: string;
   description: string;
   href: string;
+  linkLabel: string;
 }) {
   return (
     <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
@@ -307,7 +371,7 @@ function Header({
         <p className="mt-2 text-[14.5px] text-muted">{description}</p>
       </div>
       <Link href={href} className="text-[14px] text-muted underline underline-offset-2 hover:text-ink">
-        View all
+        {linkLabel}
       </Link>
     </div>
   );

@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { dashboard as dash } from "@/content/copy";
 
 const TABS = [
   { href: "/dashboard", label: "Overview" },
-  { href: "/dashboard/saved", label: "Saved" },
-  { href: "/dashboard/alerts", label: "Alerts" },
-  { href: "/dashboard/profile", label: "Profile" },
+  { href: "/dashboard/saved", label: dash.sections.saved },
+  { href: "/dashboard/alerts", label: dash.sections.alerts },
+  { href: "/dashboard/profile", label: dash.sections.profile },
 ];
 
 export function DashboardNav() {

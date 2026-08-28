@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Inter_Tight } from "next/font/google";
 import "./globals.css";
+import { brand, seo } from "@/content/copy";
 
 const interTight = Inter_Tight({
   variable: "--font-inter-tight",
@@ -20,11 +21,18 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000",
   ),
   title: {
-    default: "FundRadar — Grants and funding for startups",
-    template: "%s · FundRadar",
+    default: seo.home.title,
+    template: `%s | ${brand.name}`,
   },
-  description:
-    "Search verified startup grants, incubation programmes, accelerators, CSR funding and competitions. Every opportunity links to its official source.",
+  description: seo.home.description,
+  applicationName: brand.name,
+  robots: { index: true, follow: true },
+  openGraph: {
+    siteName: brand.lockup,
+    type: "website",
+    locale: "en_IN",
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({

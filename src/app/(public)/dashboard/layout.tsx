@@ -25,7 +25,7 @@ export default async function DashboardLayout({
     <>
       <div className="border-b border-line">
         <div className="page-shell pt-10 pb-0 lg:pt-14">
-          <p className="eyebrow">Your funding dashboard</p>
+          <p className="eyebrow">Your radar</p>
           <h1 className="display-md mt-2.5 max-w-[20ch]">
             {lead.startupName ?? lead.name.split(" ")[0]}
           </h1>

@@ -17,12 +17,15 @@ try {
   // Homepage -------------------------------------------------------------
   await page.goto(BASE, { waitUntil: "domcontentloaded" });
   const home = await body();
-  check("homepage renders hero", home.includes("Find grants and funding for your startup"));
+  check("homepage renders hero",
+    home.includes("Signal, not noise.") &&
+    home.includes("Find the startup funding that actually matters to you."));
   check("homepage shows the four homepage categories",
     ["Grants", "Seed Funds", "Incubation Programs", "Acceleration Programs"].every((c) => home.includes(c)));
   check("category counts come from the database", /\d+ opportunities/.test(home));
   check("homepage lists closing-soon programmes", home.includes("Closing soon"));
-  check("homepage explains the review guarantee", home.includes("A person checks every record"));
+  check("homepage explains the review guarantee",
+    home.includes("Automation helps us look. People decide what gets published."));
 
   // Search ---------------------------------------------------------------
   await page.fill("#q", "biotec");
@@ -115,7 +118,7 @@ try {
   check("detail page links to the official source",
     Boolean(await page.$('a[href="https://example.invalid/programmes/anantara-deeptech-prototype-grant"]')));
   check("the official source is never gated",
-    detail.includes("always confirm on the official source"));
+    detail.includes("always verify with the official programme page before applying"));
   check("unspecified fields say so rather than guessing", detail.includes("Not specified"));
 
   // Category pages -------------------------------------------------------

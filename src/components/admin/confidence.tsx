@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { admin as adminCopy } from "@/content/copy";
 
 /**
  * The spec's bands: 90%+ is high, 70–89% wants a look, below 70% needs
@@ -13,9 +14,11 @@ export function confidenceBand(confidence: number | null | undefined): {
     return { label: "Not scored", tone: "text-faint", needsCheck: false };
   }
   const pct = confidence * 100;
-  if (pct >= 90) return { label: "High", tone: "text-ok", needsCheck: false };
-  if (pct >= 70) return { label: "Check", tone: "text-warn", needsCheck: true };
-  return { label: "Verify", tone: "text-danger", needsCheck: true };
+  if (pct >= 90)
+    return { label: adminCopy.confidence.high, tone: "text-ok", needsCheck: false };
+  if (pct >= 70)
+    return { label: adminCopy.confidence.review, tone: "text-warn", needsCheck: true };
+  return { label: adminCopy.confidence.manual, tone: "text-danger", needsCheck: true };
 }
 
 export function ConfidenceDot({

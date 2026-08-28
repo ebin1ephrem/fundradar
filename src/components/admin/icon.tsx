@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  Award, Banknote, Beaker, Bike, Bot, Briefcase, Building2, Bus, Car,
+  Award, Banknote, Beaker, Bike, Bot, Briefcase, Building2, Bus, Car, ChartColumn,
   CircleDollarSign, Circle, ClipboardList, Cpu, CreditCard, Database, Droplets,
-  Factory, FlaskConical, Gavel, Gift, Globe, GraduationCap, Handshake,
+  Factory, Flag, FlaskConical, Gavel, Gift, Globe, GraduationCap, Handshake,
   HeartHandshake, HeartPulse, Landmark, Layers, Leaf, Lightbulb, LineChart,
   Medal, Microscope, Package, PiggyBank, Plane, Recycle, Rocket, Satellite,
   Scale, ScrollText, Share2, Shield, ShoppingBag, Sparkles, Sprout, Star, Sun,
-  Target, Tractor, TrendingUp, Trophy, Truck, Users, Wallet, Wheat, Wind, Wrench, Zap,
+  Target, Tractor, TrendingUp, Trophy, Truck, Upload, Users, Wallet, Wheat, Wind, Wrench, Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,13 +19,13 @@ type LucideIcon = React.ComponentType<{ className?: string; strokeWidth?: number
  * import of the whole icon set added ~250 kB to every page that renders one.
  */
 export const ICON_REGISTRY: Record<string, LucideIcon> = {
-  Award, Banknote, Beaker, Bike, Bot, Briefcase, Building2, Bus, Car,
+  Award, Banknote, Beaker, Bike, Bot, Briefcase, Building2, Bus, Car, ChartColumn,
   CircleDollarSign, Circle, ClipboardList, Cpu, CreditCard, Database, Droplets,
-  Factory, FlaskConical, Gavel, Gift, Globe, GraduationCap, Handshake,
+  Factory, Flag, FlaskConical, Gavel, Gift, Globe, GraduationCap, Handshake,
   HeartHandshake, HeartPulse, Landmark, Layers, Leaf, Lightbulb, LineChart,
   Medal, Microscope, Package, PiggyBank, Plane, Recycle, Rocket, Satellite,
   Scale, ScrollText, Share2, Shield, ShoppingBag, Sparkles, Sprout, Star, Sun,
-  Target, Tractor, TrendingUp, Trophy, Truck, Users, Wallet, Wheat, Wind, Wrench, Zap,
+  Target, Tractor, TrendingUp, Trophy, Truck, Upload, Users, Wallet, Wheat, Wind, Wrench, Zap,
 };
 
 export const ICON_NAMES = Object.keys(ICON_REGISTRY).sort();

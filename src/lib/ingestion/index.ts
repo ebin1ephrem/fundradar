@@ -18,9 +18,9 @@ import {
   FIELD_LABEL,
   type ExtractionField,
 } from "@/lib/ai/schema";
-import { slugify, uniqueSlug } from "@/lib/utils";
+import { uniqueSlug } from "@/lib/utils";
 import { normaliseExtraction, canonicaliseUrl } from "./normalise";
-import { findDuplicates, fingerprint } from "./duplicates";
+import { findDuplicates } from "./duplicates";
 import { detectChanges } from "./changes";
 
 export type IngestRequest = {
@@ -219,6 +219,21 @@ export async function ingest(request: IngestRequest): Promise<IngestResult> {
     };
   }
 
+  return completeIngestion(request, item.id, started, outcome, extractionError);
+}
+
+/**
+ * Everything after extraction: normalise, record the run, classify, then either
+ * park the material or produce a draft. Split out so structured imports (the
+ * seed importer) reach exactly the same code without an AI call in front.
+ */
+async function completeIngestion(
+  request: IngestRequest,
+  itemId: string,
+  started: Date,
+  outcome: ExtractionOutcome,
+  extractionError: string | null,
+): Promise<IngestResult> {
   const { draft, rejected: rejectedValues } = normaliseExtraction(outcome);
   const classification = outcome.classification
     .kind as CollectionClassification;
@@ -241,7 +256,7 @@ export async function ingest(request: IngestRequest): Promise<IngestResult> {
       error: extractionError,
       tokensIn: outcome.tokensIn ?? null,
       tokensOut: outcome.tokensOut ?? null,
-      collectionItemId: item.id,
+      collectionItemId: itemId,
       opportunityId: request.existingOpportunityId ?? null,
       createdById: request.adminUserId ?? null,
       fields: {
@@ -290,7 +305,7 @@ export async function ingest(request: IngestRequest): Promise<IngestResult> {
   // -- Material that is not an opportunity stays in the inbox -------------
   if (NOT_DRAFTABLE.includes(classification) || !draft.title) {
     await prisma.collectionItem.update({
-      where: { id: item.id },
+      where: { id: itemId },
       data: {
         status: "EXTRACTED",
         classification,
@@ -304,7 +319,7 @@ export async function ingest(request: IngestRequest): Promise<IngestResult> {
     });
 
     return {
-      collectionItemId: item.id,
+      collectionItemId: itemId,
       extractionRunId: run.id,
       opportunityId: null,
       reviewItemId: null,
@@ -324,7 +339,7 @@ export async function ingest(request: IngestRequest): Promise<IngestResult> {
   if (request.existingOpportunityId) {
     return updateExisting(
       request,
-      item.id,
+      itemId,
       run.id,
       outcome,
       draft,
@@ -336,13 +351,41 @@ export async function ingest(request: IngestRequest): Promise<IngestResult> {
   // -- New draft ----------------------------------------------------------
   return createDraft(
     request,
-    item.id,
+    itemId,
     run.id,
     outcome,
     draft,
     classification,
     missingFields,
   );
+}
+
+/**
+ * Ingest already-structured records (the seed import) without an AI call.
+ *
+ * The caller supplies the extraction outcome directly, so nothing is inferred:
+ * a field the file does not contain simply is not in `outcome.fields`, and it
+ * lands in the draft as UNKNOWN. From the collection item onwards this is the
+ * identical code path pasted text and crawled pages take — the record becomes
+ * PENDING_REVIEW, isActive false, with category suggestions left SUGGESTED and
+ * duplicate detection run. There is no branch here that reaches PUBLISHED.
+ */
+export async function ingestStructured(
+  request: IngestRequest,
+  outcome: ExtractionOutcome,
+): Promise<IngestResult> {
+  const contentHash = hashContent(request.text);
+  const canonical = request.url ? canonicaliseUrl(request.url) : null;
+  const started = new Date();
+
+  const item = await storeCollectionItem(
+    request,
+    contentHash,
+    canonical,
+    "EXTRACTING",
+  );
+
+  return completeIngestion(request, item.id, started, outcome, null);
 }
 
 /** Content history per URL, used for change detection and for the audit trail. */

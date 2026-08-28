@@ -247,12 +247,12 @@ export function SuggestedCategories({ suggestions }: { suggestions: Suggestion[]
 
 const REASONS = [
   ["NOT_A_STARTUP_FUNDING_OPPORTUNITY", "Not a startup funding opportunity"],
-  ["DUPLICATE", "Duplicate"],
+  ["DUPLICATE", "Duplicate of existing listing"],
   ["EXPIRED", "Expired"],
   ["INCORRECT_INFORMATION", "Incorrect information"],
   ["UNRELIABLE_SOURCE", "Unreliable source"],
-  ["UNABLE_TO_VERIFY", "Insufficient information"],
-  ["NOT_RELEVANT_TO_USERS", "Outside FundRadar's scope"],
+  ["UNABLE_TO_VERIFY", "Unable to verify"],
+  ["NOT_RELEVANT_TO_USERS", "Not relevant to platform users"],
   ["SPAM", "Spam"],
   ["OTHER", "Other"],
 ] as const;

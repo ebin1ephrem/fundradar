@@ -2,7 +2,6 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
 import { z } from "zod";
-import { env } from "@/lib/env";
 import { ExtractionSchema } from "./schema";
 import { PROMPT_VERSION, SYSTEM_PROMPT, buildUserPrompt } from "./prompt";
 import type { ExtractionInput, ExtractionOutcome, ExtractionProvider } from "./types";

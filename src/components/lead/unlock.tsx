@@ -5,6 +5,7 @@ import { Bell, Bookmark, BookmarkCheck, Lock } from "lucide-react";
 import { toggleSaveAction, requestReminderAction } from "@/app/actions/leads";
 import { cn } from "@/lib/utils";
 import { useLeadGate } from "./gate-context";
+import { opportunity as oppCopy } from "@/content/copy";
 import { track } from "./tracker";
 
 /** Every gated control routes through the same guard. */
@@ -54,7 +55,7 @@ export function SaveButton({
         ) : (
           <Bookmark className="size-4" strokeWidth={1.7} />
         )}
-        {saved ? "Saved" : "Save"}
+        {saved ? oppCopy.cta.saved : "Save"}
       </button>
     );
   }
@@ -66,7 +67,7 @@ export function SaveButton({
       onClick={() => run(submit)}
       aria-pressed={saved}
       aria-label={saved ? `Remove ${title} from saved` : `Save ${title}`}
-      title={saved ? "Saved" : "Save this opportunity"}
+      title={saved ? oppCopy.cta.saved : oppCopy.cta.save}
       className={cn(
         "relative z-10 grid size-8 shrink-0 place-items-center rounded-[6px] border transition-colors duration-200",
         saved
@@ -100,7 +101,7 @@ export function ReminderButton({ opportunityId }: { opportunityId: string }) {
       className="btn btn-secondary"
     >
       <Bell className="size-4" strokeWidth={1.7} />
-      Get reminder
+      {oppCopy.cta.remind}
     </button>
   );
 }
@@ -134,8 +135,8 @@ export function LockedSection({
               {teaser}
             </p>
             <p className="mt-1.5 text-[13.5px] text-muted">
-              Tell us where to send funding opportunities and this opens
-              straight away — no password, no account to set up.
+              Tell us where to send the signal and this opens straight away —
+              no password, no account to set up.
             </p>
           </div>
           <button
@@ -146,7 +147,7 @@ export function LockedSection({
               track({ type: "unlock_requested" });
             }}
           >
-            Show me
+            {oppCopy.locked.cta}
           </button>
         </div>
       </div>

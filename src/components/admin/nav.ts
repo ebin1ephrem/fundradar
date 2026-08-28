@@ -5,7 +5,7 @@ export type NavItem = {
   label: string;
   icon: string;
   /** Badge counter key resolved by the shell. */
-  badge?: "reviewQueue" | "inbox" | "duplicates" | "updates";
+  badge?: "reviewQueue" | "inbox" | "duplicates" | "updates" | "reports";
   superAdminOnly?: boolean;
 };
 
@@ -24,6 +24,7 @@ export const NAV: NavSection[] = [
     title: "Funding database",
     items: [
       { href: "/admin/opportunities", label: "Opportunities", icon: "Banknote" },
+      { href: "/admin/opportunities/import", label: "Import seed data", icon: "Upload" },
       { href: "/admin/categories", label: "Categories", icon: "Layers" },
     ],
   },
@@ -39,11 +40,23 @@ export const NAV: NavSection[] = [
       { href: "/admin/inbox", label: "Collection inbox", icon: "Package", badge: "inbox" },
       { href: "/admin/sources", label: "Sources", icon: "Globe" },
       { href: "/admin/jobs", label: "Crawl jobs", icon: "Bot" },
+      {
+        href: "/admin/reports",
+        label: "Reported errors",
+        icon: "Flag",
+        badge: "reports",
+      },
     ],
   },
   {
     title: "Startups",
     items: [{ href: "/admin/leads", label: "Leads", icon: "Users" }],
+  },
+  {
+    title: "Measurement",
+    items: [
+      { href: "/admin/analytics", label: "Analytics", icon: "ChartColumn" },
+    ],
   },
   {
     title: "Administration",

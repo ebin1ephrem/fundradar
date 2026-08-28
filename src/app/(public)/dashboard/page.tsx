@@ -6,6 +6,7 @@ import { recommendedFor } from "@/lib/queries/recommendations";
 import { computeLeadScore, MAX_SCORE } from "@/lib/leads/scoring";
 import { OpportunityCard } from "@/components/public/opportunity-card";
 import { CLOSING_SOON_DAYS } from "@/lib/opportunity-status";
+import { dashboard as dash, home } from "@/content/copy";
 
 export const dynamic = "force-dynamic";
 
@@ -47,7 +48,7 @@ export default async function DashboardPage() {
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Tile label="Saved" value={saved.length} href="/dashboard/saved" />
         <Tile
-          label="Closing soon"
+          label={dash.sections.closing}
           value={savedClosingSoon.length}
           hint="Of the ones you saved"
           accent={savedClosingSoon.length > 0}
@@ -68,7 +69,7 @@ export default async function DashboardPage() {
       <section>
         <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="display-md">Recommended for you</h2>
+            <h2 className="display-md">{dash.sections.signal}</h2>
             <p className="mt-1.5 text-[14px] text-muted">
               {recommended.basis.length
                 ? `Based on your interest in ${recommended.basis.join(", ")}.`
@@ -79,7 +80,7 @@ export default async function DashboardPage() {
             href="/opportunities"
             className="text-[14px] text-muted underline underline-offset-2 hover:text-ink"
           >
-            Browse everything
+            {home.open.cta}
           </Link>
         </div>
 
@@ -90,15 +91,23 @@ export default async function DashboardPage() {
             ))}
           </div>
         ) : (
-          <p className="rounded-[12px] border border-dashed border-line-strong px-6 py-12 text-center text-[14px] text-muted">
-            Nothing to recommend yet. Browse a few opportunities and this fills in.
-          </p>
+          <div className="rounded-[12px] border border-dashed border-line-strong px-6 py-12 text-center">
+            <p className="text-[15px] font-medium tracking-[-0.02em]">
+              {dash.empty.recommendations.headline}
+            </p>
+            <p className="mx-auto mt-2 max-w-[46ch] text-[14px] text-muted">
+              {dash.empty.recommendations.body}
+            </p>
+            <Link href="/dashboard/profile" className="btn btn-secondary mt-5">
+              {dash.empty.recommendations.cta}
+            </Link>
+          </div>
         )}
       </section>
 
       {interests.length ? (
         <section>
-          <h2 className="display-md">Your categories</h2>
+          <h2 className="display-md">{dash.sections.categories}</h2>
           <p className="mt-1.5 text-[14px] text-muted">
             Built from what you have been looking at. Change what you hear about
             in{" "}
@@ -123,9 +132,9 @@ export default async function DashboardPage() {
 
       {newest.length ? (
         <section>
-          <h2 className="display-md">New opportunities</h2>
+          <h2 className="display-md">{dash.sections.new}</h2>
           <p className="mt-1.5 mb-5 text-[14px] text-muted">
-            The latest to clear review.
+            {dash.sections.newHint}.
           </p>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {newest.map((hit) => (
