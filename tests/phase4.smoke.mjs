@@ -16,8 +16,6 @@ page.on("pageerror", (e) => fail.push(`console error: ${e.message.slice(0, 120)}
 const body = () => page.textContent("body");
 const go = (path) => page.goto(BASE + path, { waitUntil: "domcontentloaded" });
 
-let publicSlug = null;
-
 try {
   // --- Sign in ----------------------------------------------------------
   await go("/admin/login");
@@ -147,8 +145,6 @@ try {
     if (link) {
       await link.click();
       await page.waitForURL(/\/admin\/opportunities\/[a-z0-9]+/, { timeout: 20000 });
-      const slugField = await page.$("#slug");
-      if (slugField) publicSlug = await slugField.inputValue();
     }
   }
 

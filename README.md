@@ -41,16 +41,18 @@ when you add its key, and has a working local fallback until you do.
    Set `DATABASE_URL` to the pooled URL and `DIRECT_DATABASE_URL` to the direct
    one — Prisma migrations need an unpooled connection.
 2. Set `NEXT_PUBLIC_APP_URL` to your domain and `CRON_SECRET` to a random string.
-3. Deploy. The build script runs `prisma generate` before `next build`.
-4. Run `npm run db:migrate && npm run db:seed` once against the production
-   database.
+3. Deploy. The build script runs `prisma generate`, applies all pending
+   migrations with `prisma migrate deploy`, and then runs `next build`.
+4. Run `npm run db:seed` once against the production database to create the
+   initial categories, settings and admin account. Migrations are applied
+   automatically on every deployment and are safe to rerun.
 
 ## Scripts
 
 | Command | Does |
 | --- | --- |
 | `npm run dev` | Development server |
-| `npm run build` | Generate the Prisma client, then build |
+| `npm run build` | Generate Prisma, deploy pending migrations, then build |
 | `npm run typecheck` | TypeScript, no emit |
 | `npm run lint` | ESLint |
 | `npm run db:migrate` | Apply migrations |

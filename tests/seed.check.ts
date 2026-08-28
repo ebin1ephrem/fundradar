@@ -149,7 +149,7 @@ async function main() {
   const result = await importOne(record, admin.id);
   check("seed record becomes a draft", result.outcome === "DRAFT_CREATED", result.message);
 
-  let draftId: string | null = result.opportunityId;
+  const draftId: string | null = result.opportunityId;
 
   if (draftId) {
     const draft = await prisma.opportunity.findUnique({ where: { id: draftId } });
