@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowUpRight, Bell, Check, ExternalLink, MapPin, Share2 } from "lucide-react";
+import { ArrowUpRight, Check, ExternalLink, MapPin, Share2 } from "lucide-react";
 import {
   getPublishedOpportunity,
-  recordView,
   similarOpportunities,
 } from "@/lib/queries/opportunity-detail";
 import { LIFECYCLE_LABEL, deadlineLabel, lifecycleStatus } from "@/lib/opportunity-status";
@@ -13,7 +12,17 @@ import { BENEFIT_FIELDS, FUNDING_TYPE_LABEL, GEOGRAPHY_SCOPE_LABEL } from "@/lib
 import { DetailSection, FactRow } from "@/components/public/detail-section";
 import { ProviderText } from "@/components/public/prose";
 import { OpportunityCard } from "@/components/public/opportunity-card";
-import { SaveButton } from "@/components/public/save-button";
+import {
+  ApplyLink,
+  LockedSection,
+  ReminderButton,
+  SaveButton,
+} from "@/components/lead/unlock";
+import { LeadGateSubject } from "@/components/lead/gate-context";
+import { TrackView } from "@/components/lead/tracker";
+import { getViewer } from "@/lib/leads/identity";
+import { resolveGate } from "@/lib/gating";
+import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
 
 // Deliberately dynamic: a cached page showing "3 days left" when the deadline
@@ -49,8 +58,20 @@ export default async function OpportunityPage({
   const opportunity = await getPublishedOpportunity(slug);
   if (!opportunity) notFound();
 
-  await recordView(opportunity.id);
-  const similar = await similarOpportunities(opportunity);
+  const { lead } = await getViewer();
+  const gate = await resolveGate(Boolean(lead));
+  const similar = gate.isLocked("relatedOpportunities")
+    ? []
+    : await similarOpportunities(opportunity);
+
+  const saved = lead
+    ? await prisma.savedOpportunity.findUnique({
+        where: {
+          leadId_opportunityId: { leadId: lead.id, opportunityId: opportunity.id },
+        },
+        select: { id: true },
+      })
+    : null;
 
   const status = lifecycleStatus(opportunity);
   const isClosed = status === "CLOSED";
@@ -82,6 +103,20 @@ export default async function OpportunityPage({
 
   return (
     <>
+      <LeadGateSubject
+        subject={{
+          kind: "opportunity",
+          label: opportunityTypes[0]?.category.name,
+          opportunityId: opportunity.id,
+          categoryIds: opportunity.categories.map((c) => c.categoryId),
+        }}
+      />
+      <TrackView
+        type="opportunity_view"
+        opportunityId={opportunity.id}
+        categoryIds={opportunity.categories.map((c) => c.categoryId)}
+      />
+
       <div className="border-b border-line bg-subtle">
         <div className="page-shell py-9 lg:py-12">
           <nav aria-label="Breadcrumb" className="mb-5">
@@ -195,23 +230,22 @@ export default async function OpportunityPage({
                 </dl>
 
                 <div className="mt-5 grid gap-2">
-                  {opportunity.applicationUrl ? (
-                    <a
+                  {opportunity.applicationUrl && !gate.isLocked("applicationUrl") ? (
+                    <ApplyLink
+                      opportunityId={opportunity.id}
                       href={opportunity.applicationUrl}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      className="btn btn-accent w-full"
                     >
                       Apply officially
                       <ArrowUpRight className="size-4" strokeWidth={1.8} />
-                    </a>
+                    </ApplyLink>
                   ) : null}
                   <div className="grid grid-cols-[1fr_auto_auto] gap-2">
-                    <button type="button" className="btn btn-secondary">
-                      <Bell className="size-4" strokeWidth={1.7} />
-                      Get reminder
-                    </button>
-                    <SaveButton opportunityId={opportunity.id} title={opportunity.title} />
+                    <ReminderButton opportunityId={opportunity.id} />
+                    <SaveButton
+                      opportunityId={opportunity.id}
+                      title={opportunity.title}
+                      saved={Boolean(saved)}
+                    />
                     <a
                       href={`https://wa.me/?text=${encodeURIComponent(
                         `${opportunity.title} — ${opportunity.providerName}`,
@@ -238,7 +272,13 @@ export default async function OpportunityPage({
 
       <div className="page-shell py-10 lg:py-14">
         <div className="grid max-w-[760px] gap-8">
-          {opportunity.fullDescription ? (
+          {gate.isLocked("fullDescription") ? (
+            <LockedSection
+              title="Overview"
+              teaser="Read the full programme description"
+              reason="view_full_details"
+            />
+          ) : opportunity.fullDescription ? (
             <DetailSection id="overview" title="Overview">
               <ProviderText text={opportunity.fullDescription} />
             </DetailSection>
@@ -277,6 +317,13 @@ export default async function OpportunityPage({
             </dl>
           </DetailSection>
 
+          {gate.isLocked("eligibility") ? (
+            <LockedSection
+              title="Eligibility"
+              teaser="See the full eligibility criteria"
+              reason="view_eligibility"
+            />
+          ) : (
           <DetailSection id="eligibility" title="Eligibility">
             <ProviderText text={opportunity.eligibilitySummary} />
             {eligibilityFlags.length ? (
@@ -305,6 +352,7 @@ export default async function OpportunityPage({
               </div>
             ) : null}
           </DetailSection>
+          )}
 
           <DetailSection id="who-can-apply" title="Who can apply">
             <dl className="rounded-[12px] border border-line px-5 py-1">
@@ -339,7 +387,13 @@ export default async function OpportunityPage({
             ) : null}
           </DetailSection>
 
-          {benefits.length || opportunity.benefitsSummary ? (
+          {gate.isLocked("benefits") ? (
+            <LockedSection
+              title="Benefits"
+              teaser="See everything the programme offers"
+              reason="view_benefits"
+            />
+          ) : benefits.length || opportunity.benefitsSummary ? (
             <DetailSection id="benefits" title="Benefits">
               <ProviderText text={opportunity.benefitsSummary} />
               {benefits.length ? (
@@ -355,7 +409,13 @@ export default async function OpportunityPage({
             </DetailSection>
           ) : null}
 
-          {opportunity.applicationProcess || opportunity.applicationInstructions ? (
+          {gate.isLocked("applicationProcess") ? (
+            <LockedSection
+              title="Application process"
+              teaser="See how to apply, step by step"
+              reason="view_application_details"
+            />
+          ) : opportunity.applicationProcess || opportunity.applicationInstructions ? (
             <DetailSection id="application-process" title="Application process">
               <ProviderText
                 text={opportunity.applicationProcess ?? opportunity.applicationInstructions}
@@ -363,13 +423,19 @@ export default async function OpportunityPage({
             </DetailSection>
           ) : null}
 
-          {opportunity.requiredDocuments ? (
+          {gate.isLocked("requiredDocuments") ? (
+            <LockedSection
+              title="Required documents"
+              teaser="See what you need to prepare"
+              reason="view_documents"
+            />
+          ) : opportunity.requiredDocuments ? (
             <DetailSection id="required-documents" title="Required documents">
               <ProviderText text={opportunity.requiredDocuments} />
             </DetailSection>
           ) : null}
 
-          {opportunity.selectionProcess ? (
+          {gate.isLocked("selectionProcess") ? null : opportunity.selectionProcess ? (
             <DetailSection id="selection-process" title="Selection process">
               <ProviderText text={opportunity.selectionProcess} />
             </DetailSection>
@@ -402,7 +468,7 @@ export default async function OpportunityPage({
             </dl>
           </DetailSection>
 
-          {opportunity.importantNotes ? (
+          {gate.isLocked("importantNotes") ? null : opportunity.importantNotes ? (
             <DetailSection id="notes" title="Important notes">
               <ProviderText text={opportunity.importantNotes} />
             </DetailSection>

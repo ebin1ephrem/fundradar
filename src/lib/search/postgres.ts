@@ -1,6 +1,7 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { parseQuery, type ParsedQuery } from "./query";
 import type {
   OpportunityFilters,
   SearchHit,
@@ -37,11 +38,11 @@ export class PostgresSearchProvider implements SearchProvider {
         o."applicationDeadline", o."isRollingDeadline", o."applicationOpenDate",
         o."lifecycleOverride", o."geographyScope", o.country, o.state,
         o."publishedAt", o."updatedAt", o."viewCount",
-        ${rank} AS rank,
+        ${rank} AS search_rank,
         COUNT(*) OVER () AS total_count
       FROM "Opportunity" o
       WHERE ${where}
-      ORDER BY ${orderBy(filters, rank)}
+      ORDER BY ${orderBy(filters, parsed)}
       LIMIT ${perPage} OFFSET ${(page - 1) * perPage}
     `;
 
@@ -93,47 +94,9 @@ export class PostgresSearchProvider implements SearchProvider {
 type RawRow = Omit<SearchHit, "categories" | "fundingMin" | "fundingMax"> & {
   fundingMin: Prisma.Decimal | null;
   fundingMax: Prisma.Decimal | null;
-  rank: number;
+  search_rank: number;
   total_count: bigint;
 };
-
-type ParsedQuery = {
-  /** The raw phrase, for trigram similarity. */
-  phrase: string;
-  /** Every term ANDed — a precise match, ranked highest. */
-  andQuery: string;
-  /** Every term ORed — keeps recall when one word is missing. */
-  orQuery: string;
-  /** ILIKE patterns used to search category names. */
-  patterns: string[];
-};
-
-/**
- * Founders type things like "women founder grants", where no single record
- * contains all three words. ANDing every term (what plainto_tsquery and
- * websearch_to_tsquery both do) returns nothing for those. So terms are ORed
- * for matching and the AND form is used only as a ranking bonus, which keeps
- * precise queries at the top without losing the rest.
- *
- * Terms are reduced to letters and digits before being interpolated into a
- * tsquery, so nothing a visitor types can alter the query's structure.
- */
-function parseQuery(q?: string): ParsedQuery | null {
-  const phrase = (q ?? "").trim().slice(0, 120);
-  const terms = (phrase.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [])
-    .filter((t) => t.length > 1)
-    .slice(0, 8);
-
-  if (terms.length === 0) return null;
-
-  const prefixed = terms.map((t) => `${t.slice(0, 40)}:*`);
-  return {
-    phrase,
-    andQuery: prefixed.join(" & "),
-    orQuery: prefixed.join(" | "),
-    patterns: terms.map((t) => `%${t}%`),
-  };
-}
 
 async function buildWhere(filters: OpportunityFilters): Promise<Prisma.Sql> {
   const clauses: Prisma.Sql[] = [
@@ -143,16 +106,18 @@ async function buildWhere(filters: OpportunityFilters): Promise<Prisma.Sql> {
 
   const parsed = parseQuery(filters.q);
   if (parsed) {
+    // Indexed tsquery match first so the GIN index does the heavy lifting, then
+    // the minimum-match count on the surviving candidates. The trigram and
+    // category clauses are escape hatches for typos and for words that only
+    // appear in a record's tags.
     clauses.push(Prisma.sql`(
-      o."searchVector" @@ to_tsquery('english', ${parsed.orQuery})
+      (
+        o."searchVector" @@ to_tsquery('english', ${parsed.orQuery})
+        AND ${matchCount(parsed)} >= ${parsed.minMatch}
+      )
       OR ${parsed.phrase} <% o."title"
       OR ${parsed.phrase} <% o."providerName"
-      OR EXISTS (
-        SELECT 1 FROM "OpportunityCategory" oc
-        JOIN "Category" c ON c.id = oc."categoryId"
-        WHERE oc."opportunityId" = o.id
-          AND c.name ILIKE ANY(ARRAY[${Prisma.join(parsed.patterns)}])
-      )
+      OR ${categoryMatch(parsed)}
     )`);
   }
 
@@ -263,29 +228,49 @@ async function groupCategorySlugs(slugs?: string[]): Promise<string[][]> {
   return [...byType.values()];
 }
 
+/** How many of the query's terms this record actually contains. */
+function matchCount(parsed: ParsedQuery): Prisma.Sql {
+  return Prisma.join(
+    parsed.prefixed.map(
+      (term) =>
+        Prisma.sql`(CASE WHEN o."searchVector" @@ to_tsquery('english', ${term}) THEN 1 ELSE 0 END)`,
+    ),
+    " + ",
+  );
+}
+
+function categoryMatch(parsed: ParsedQuery): Prisma.Sql {
+  return Prisma.sql`EXISTS (
+    SELECT 1 FROM "OpportunityCategory" oc
+    JOIN "Category" c ON c.id = oc."categoryId"
+    WHERE oc."opportunityId" = o.id
+      AND c.name ILIKE ANY(ARRAY[${Prisma.join(parsed.patterns)}])
+  )`;
+}
+
 /**
- * A precise all-terms match outranks a partial one; a title hit outranks a hit
- * buried in the body; a category hit still counts so "climate" finds records
- * tagged ClimateTech even when the word never appears in their text.
+ * More matching terms beats fewer; a precise all-terms match beats a partial
+ * one; a title hit beats a hit buried in the body; and a category hit still
+ * counts, so "climate" finds records tagged ClimateTech even when the word
+ * never appears in their text.
  */
 function rankExpression(parsed: ParsedQuery | null): Prisma.Sql {
   if (!parsed) return Prisma.sql`0`;
   return Prisma.sql`(
-    ts_rank(o."searchVector", to_tsquery('english', ${parsed.andQuery})) * 8
+    (${matchCount(parsed)})::float * 2
+    + ts_rank(o."searchVector", to_tsquery('english', ${parsed.andQuery})) * 8
     + ts_rank(o."searchVector", to_tsquery('english', ${parsed.orQuery})) * 3
     + word_similarity(${parsed.phrase}, o."title") * 4
     + word_similarity(${parsed.phrase}, o."providerName") * 2
-    + CASE WHEN EXISTS (
-        SELECT 1 FROM "OpportunityCategory" oc
-        JOIN "Category" c ON c.id = oc."categoryId"
-        WHERE oc."opportunityId" = o.id
-          AND c.name ILIKE ANY(ARRAY[${Prisma.join(parsed.patterns)}])
-      ) THEN 1.5 ELSE 0 END
+    + CASE WHEN ${categoryMatch(parsed)} THEN 1.5 ELSE 0 END
   )`;
 }
 
-function orderBy(filters: OpportunityFilters, rank: Prisma.Sql): Prisma.Sql {
-  const sort = filters.sort ?? (filters.q ? "relevance" : "newest");
+function orderBy(
+  filters: OpportunityFilters,
+  parsed: ParsedQuery | null,
+): Prisma.Sql {
+  const sort = filters.sort ?? (parsed ? "relevance" : "newest");
   const newest = Prisma.sql`o."publishedAt" DESC NULLS LAST, o."createdAt" DESC`;
 
   switch (sort) {
@@ -301,9 +286,9 @@ function orderBy(filters: OpportunityFilters, rank: Prisma.Sql): Prisma.Sql {
     case "popular":
       return Prisma.sql`o."viewCount" DESC, o."saveCount" DESC, ${newest}`;
     case "relevance":
-      return filters.q
-        ? Prisma.sql`${rank} DESC, ${newest}`
-        : newest;
+      // Sorts on the alias so the rank expression is evaluated once per row,
+      // not a second time for the sort.
+      return parsed ? Prisma.sql`search_rank DESC, ${newest}` : newest;
     default:
       return newest;
   }

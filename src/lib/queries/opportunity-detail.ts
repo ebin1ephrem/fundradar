@@ -57,15 +57,3 @@ export async function similarOpportunities(
 
   return [];
 }
-
-/** Best-effort view counter; a failure here must never break the page. */
-export async function recordView(id: string): Promise<void> {
-  try {
-    await prisma.opportunity.update({
-      where: { id },
-      data: { viewCount: { increment: 1 } },
-    });
-  } catch {
-    // ignore
-  }
-}

@@ -9,6 +9,8 @@ import { OpportunityGrid } from "@/components/public/opportunity-card";
 import { SearchBar } from "@/components/public/search-bar";
 import { SortSelect } from "@/components/public/sort-select";
 import { Pagination } from "@/components/public/pagination";
+import { LeadGateSubject } from "@/components/lead/gate-context";
+import { savedOpportunityIds } from "@/lib/leads/identity";
 
 export const metadata: Metadata = {
   title: "Browse startup funding opportunities",
@@ -29,9 +31,10 @@ export default async function OpportunitiesPage({
   const params = await searchParams;
   const filters = parseFilters(params);
 
-  const [categories, states] = await Promise.all([
+  const [categories, states, savedIds] = await Promise.all([
     filterCategories(),
     statesWithOpportunities(),
+    savedOpportunityIds(),
   ]);
 
   const [results, counts] = await Promise.all([
@@ -52,6 +55,17 @@ export default async function OpportunitiesPage({
 
   return (
     <>
+      <LeadGateSubject
+        subject={{
+          kind: filters.q ? "search" : "general",
+          label: filters.q,
+          count: results.total,
+          categoryIds: categories
+            .filter((c) => (filters.categorySlugs ?? []).includes(c.slug))
+            .map((c) => c.slug),
+        }}
+      />
+
       <div className="border-b border-line">
         <div className="page-shell py-10 lg:py-14">
           <nav aria-label="Breadcrumb" className="mb-4">
@@ -139,7 +153,7 @@ export default async function OpportunitiesPage({
             {results.hits.length === 0 ? (
               <EmptyState hasFilters={activeCount > 0 || Boolean(filters.q)} />
             ) : (
-              <OpportunityGrid hits={results.hits} />
+              <OpportunityGrid hits={results.hits} savedIds={savedIds} />
             )}
 
             <Pagination

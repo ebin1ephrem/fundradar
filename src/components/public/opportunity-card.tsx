@@ -3,11 +3,17 @@ import { ArrowUpRight, MapPin } from "lucide-react";
 import type { SearchHit } from "@/lib/search";
 import { cn, daysUntil, formatDate, fundingRangeLabel } from "@/lib/utils";
 import { CLOSING_SOON_DAYS, lifecycleStatus } from "@/lib/opportunity-status";
-import { SaveButton } from "./save-button";
+import { SaveButton } from "@/components/lead/unlock";
 
 const NEW_FOR_DAYS = 14;
 
-export function OpportunityCard({ hit }: { hit: SearchHit }) {
+export function OpportunityCard({
+  hit,
+  saved,
+}: {
+  hit: SearchHit;
+  saved?: boolean;
+}) {
   const status = lifecycleStatus({
     applicationDeadline: hit.applicationDeadline,
     applicationOpenDate: hit.applicationOpenDate,
@@ -56,7 +62,7 @@ export function OpportunityCard({ hit }: { hit: SearchHit }) {
           {hit.isRollingDeadline ? <span className="pill">Rolling</span> : null}
           {hit.isEquityFree ? <span className="pill">Equity-free</span> : null}
         </div>
-        <SaveButton opportunityId={hit.id} title={hit.title} />
+        <SaveButton opportunityId={hit.id} title={hit.title} saved={saved} />
       </div>
 
       <h3 className="text-[17px] leading-[1.25] font-medium tracking-[-0.02em]">
@@ -114,11 +120,17 @@ export function OpportunityCard({ hit }: { hit: SearchHit }) {
   );
 }
 
-export function OpportunityGrid({ hits }: { hits: SearchHit[] }) {
+export function OpportunityGrid({
+  hits,
+  savedIds,
+}: {
+  hits: SearchHit[];
+  savedIds?: Set<string>;
+}) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {hits.map((hit) => (
-        <OpportunityCard key={hit.id} hit={hit} />
+        <OpportunityCard key={hit.id} hit={hit} saved={savedIds?.has(hit.id)} />
       ))}
     </div>
   );

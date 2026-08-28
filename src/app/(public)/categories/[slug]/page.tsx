@@ -9,6 +9,9 @@ import { SearchBar } from "@/components/public/search-bar";
 import { Icon } from "@/components/admin/icon";
 import { CATEGORY_TYPE_LABEL } from "@/lib/validation/category";
 import { CLOSING_SOON_DAYS } from "@/lib/opportunity-status";
+import { LeadGateSubject } from "@/components/lead/gate-context";
+import { TrackView } from "@/components/lead/tracker";
+import { savedOpportunityIds } from "@/lib/leads/identity";
 
 export const dynamic = "force-dynamic";
 
@@ -69,10 +72,23 @@ export default async function CategoryPage({
   ]);
 
   const count = total.total;
-  const industriesInside = await industriesFor(category.slug);
+  const [industriesInside, savedIds] = await Promise.all([
+    industriesFor(category.slug),
+    savedOpportunityIds(),
+  ]);
 
   return (
     <>
+      <LeadGateSubject
+        subject={{
+          kind: category.categoryType === "FOUNDER_TYPE" ? "founder" : "category",
+          label: category.name,
+          count,
+          categoryIds: [category.id],
+        }}
+      />
+      <TrackView type="category_view" categoryId={category.id} />
+
       <div className="border-b border-line">
         <div className="page-shell py-10 lg:py-16">
           <nav aria-label="Breadcrumb" className="mb-5">
@@ -174,7 +190,7 @@ export default async function CategoryPage({
               >
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {closingSoon.hits.map((hit) => (
-                    <OpportunityCard key={hit.id} hit={hit} />
+                    <OpportunityCard key={hit.id} hit={hit} saved={savedIds.has(hit.id)} />
                   ))}
                 </div>
               </Section>
@@ -185,7 +201,7 @@ export default async function CategoryPage({
               description={`Newly published in ${category.name}.`}
               href={`/opportunities?c=${category.slug}`}
             >
-              <OpportunityGrid hits={latest.hits} />
+              <OpportunityGrid hits={latest.hits} savedIds={savedIds} />
             </Section>
 
             {featured.hits.length > 1 ? (
@@ -196,7 +212,7 @@ export default async function CategoryPage({
               >
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {featured.hits.map((hit) => (
-                    <OpportunityCard key={hit.id} hit={hit} />
+                    <OpportunityCard key={hit.id} hit={hit} saved={savedIds.has(hit.id)} />
                   ))}
                 </div>
               </Section>

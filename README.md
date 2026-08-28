@@ -69,7 +69,11 @@ production database.
 
 ### Smoke tests
 
-Two browser suites, 49 checks between them.
+Four suites, 123 checks between them.
+
+`npm run check:search` — search behaviour without a browser: parsing and
+stopword handling, minimum-should-match, typo tolerance, category-aware
+matching, every filter, sorting, facets, pagination and SQL-injection safety.
 
 `tests/phase1.smoke.mjs` — the admin flow: the auth gate, a wrong-password
 rejection, sign-in, creating a category, creating and publishing an opportunity
@@ -78,9 +82,16 @@ record, the audit trail, and sign-out revoking access.
 
 `tests/phase2.smoke.mjs` — the public site: typo-tolerant and multi-word search,
 category-aware matching, faceted filtering across dimensions, sorting, closed
-programmes hidden by default, the detail page's sections and trust block,
+programmes hidden by default, the detail page's public sections and trust block,
 category landing pages, the `/grants` redirect, 404s, filtering with JavaScript
 disabled, and no horizontal overflow on mobile.
+
+`tests/phase3.smoke.mjs` — the lead journey: browsing without a prompt, the gate
+on deeper sections, the popup opening on a locked action and after several
+views, capture unlocking in place, being remembered afterwards, saving,
+the dashboard, progressive profiling raising completion, separate email and
+WhatsApp consent, sign-out, magic-link sign-in that reveals nothing about who
+exists, and the admin lead views and CSV export.
 
 ```bash
 npm run build && npx next start -p 3100 &
@@ -96,6 +107,9 @@ src/app/(public)              the founder-facing site
 src/app/admin                 the console
 src/lib/publishing.ts         what a record needs before it can go public
 src/lib/versioning.ts         snapshots, so grant data is never silently overwritten
+src/lib/search/               ranked Postgres search, behind one interface
+src/lib/leads/                identity, scoring, activity
+src/lib/gating.ts             what a visitor sees before giving their details
 src/lib/env.ts                which integrations are switched on
 src/app/globals.css           the design tokens
 ```

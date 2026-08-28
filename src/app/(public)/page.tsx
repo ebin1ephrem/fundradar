@@ -8,6 +8,7 @@ import { OpportunityCard } from "@/components/public/opportunity-card";
 import { SearchBar } from "@/components/public/search-bar";
 import { Icon } from "@/components/admin/icon";
 import { CLOSING_SOON_DAYS } from "@/lib/opportunity-status";
+import { savedOpportunityIds } from "@/lib/leads/identity";
 
 export const metadata: Metadata = {
   title: "FundRadar — Find grants and funding for your startup",
@@ -42,6 +43,7 @@ export default async function HomePage() {
     })
     .then((rows) => rows.length);
 
+  const savedIds = await savedOpportunityIds();
   const total = totals.total;
 
   return (
@@ -163,7 +165,7 @@ export default async function HomePage() {
             />
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {closingSoon.hits.map((hit) => (
-                <OpportunityCard key={hit.id} hit={hit} />
+                <OpportunityCard key={hit.id} hit={hit} saved={savedIds.has(hit.id)} />
               ))}
             </div>
           </div>
@@ -228,7 +230,7 @@ export default async function HomePage() {
             />
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {recent.hits.map((hit) => (
-                <OpportunityCard key={hit.id} hit={hit} />
+                <OpportunityCard key={hit.id} hit={hit} saved={savedIds.has(hit.id)} />
               ))}
             </div>
           </div>

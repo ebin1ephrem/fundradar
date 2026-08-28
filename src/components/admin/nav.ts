@@ -28,13 +28,18 @@ export const NAV: NavSection[] = [
     ],
   },
   {
+    title: "Startups",
+    items: [{ href: "/admin/leads", label: "Leads", icon: "Users" }],
+  },
+  {
     title: "Administration",
     items: [
+      { href: "/admin/settings", label: "Settings", icon: "Wrench" },
       { href: "/admin/audit", label: "Audit log", icon: "ScrollText" },
       {
         href: "/admin/team",
         label: "Admin users",
-        icon: "Users",
+        icon: "Shield",
         superAdminOnly: true,
       },
     ],

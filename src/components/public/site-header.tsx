@@ -12,7 +12,13 @@ const LINKS = [
   { href: "/opportunities?closing=7", label: "Closing soon" },
 ];
 
-export function SiteHeader() {
+export function SiteHeader({
+  signedIn,
+  name,
+}: {
+  signedIn: boolean;
+  name: string | null;
+}) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
@@ -67,8 +73,19 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link href="/opportunities" className="btn btn-primary btn-sm">
-            Find funding
+          {signedIn ? (
+            <Link
+              href="/dashboard"
+              className="hidden max-w-[16ch] truncate text-[14.5px] text-muted transition-colors duration-200 hover:text-ink sm:block"
+            >
+              {name ? name.split(" ")[0] : "Dashboard"}
+            </Link>
+          ) : null}
+          <Link
+            href={signedIn ? "/dashboard" : "/opportunities"}
+            className="btn btn-primary btn-sm"
+          >
+            {signedIn ? "My dashboard" : "Find funding"}
           </Link>
           <button
             type="button"
@@ -85,7 +102,10 @@ export function SiteHeader() {
       {open ? (
         <nav className="page-shell border-t border-line py-3 md:hidden" aria-label="Main">
           <ul className="grid gap-0.5">
-            {LINKS.map((link) => (
+            {(signedIn
+              ? [...LINKS, { href: "/dashboard", label: "My dashboard" }]
+              : LINKS
+            ).map((link) => (
               <li key={link.href}>
                 <Link
                   href={link.href}

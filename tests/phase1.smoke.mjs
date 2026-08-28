@@ -115,7 +115,27 @@ try {
   check("publish recorded in audit log", audit.includes("opportunity.publish"));
   check("category creation recorded", audit.includes("category.create"));
 
-  // 10. Sign out clears access
+  // 10. Archive what this run created, so a test never leaves published
+  //     records behind on the public site.
+  await page.goto(`${BASE}/admin/opportunities?q=${RUN}`, { waitUntil: "networkidle" });
+  const created = await page.$$eval('a[href^="/admin/opportunities/"]', (links) =>
+    links.map((a) => a.getAttribute("href")).filter(Boolean),
+  );
+  for (const href of created) {
+    await page.goto(BASE + href, { waitUntil: "networkidle" });
+    const archive = await page.$('button:has-text("Archive")');
+    if (archive) {
+      await archive.click();
+      await page.waitForTimeout(800);
+    }
+  }
+  await page.goto(`${BASE}/admin/opportunities?status=PUBLISHED&q=${RUN}`, {
+    waitUntil: "networkidle",
+  });
+  check("test records are archived, not left published",
+    (await page.textContent("body")).includes("No opportunities match this view"));
+
+  // 11. Sign out clears access
   await page.goto(`${BASE}/admin`, { waitUntil: "networkidle" });
   await page.click('button:has-text("Sign out")');
   await page.waitForURL(/\/admin\/login/, { timeout: 15000 });
