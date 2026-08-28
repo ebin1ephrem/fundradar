@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { brand } from "@/content/copy";
@@ -34,15 +35,16 @@ export async function SiteFooter() {
       <div className="page-shell py-14 lg:py-20">
         <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div className="max-w-[34ch]">
-            <p className="flex items-center gap-2 text-[16px] font-medium tracking-[-0.025em]">
-              <span className="grid size-7 place-items-center rounded-[6px] bg-ink text-accent">
-                <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden="true">
-                  <circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" strokeWidth="1.6" />
-                  <circle cx="8" cy="8" r="2" fill="currentColor" />
-                </svg>
-              </span>
-              {brand.lockup}
-            </p>
+            <Link href="/" aria-label={`${brand.name} home`}>
+              <Image
+                src="/fundradar-logo.svg"
+                alt={brand.name}
+                width={200}
+                height={43}
+                className="h-[38px] w-auto"
+              />
+            </Link>
+            <p className="mt-1 text-[12.5px] text-muted">by {brand.parent}</p>
             <p className="mt-2 text-[14px] text-muted">{brand.tagline}</p>
             <p className="mt-4 text-[13.5px] leading-relaxed text-muted">
               {brand.trustLine}

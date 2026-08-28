@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -36,15 +37,17 @@ export function SiteHeader({
       <div className="page-shell flex h-[68px] items-center justify-between gap-6 lg:h-[72px]">
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-2 text-[16px] font-medium tracking-[-0.025em]"
+          className="shrink-0"
+          aria-label={`${brand.name} home`}
         >
-          <span className="grid size-7 place-items-center rounded-[6px] bg-ink text-accent">
-            <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden="true">
-              <circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" strokeWidth="1.6" />
-              <circle cx="8" cy="8" r="2" fill="currentColor" />
-            </svg>
-          </span>
-          {brand.name}
+          <Image
+            src="/fundradar-logo.svg"
+            alt={brand.name}
+            width={180}
+            height={39}
+            priority
+            className="h-[30px] w-auto sm:h-[34px]"
+          />
         </Link>
 
         <nav className="hidden items-center gap-7 md:flex" aria-label="Main">
