@@ -1,0 +1,978 @@
+// FundRadar — startup grants & funding discovery platform
+// Data model. See docs/ARCHITECTURE.md for the collection -> review -> publish contract.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  directUrl  = env("DIRECT_DATABASE_URL")
+  extensions = [pg_trgm]
+}
+
+// ---------------------------------------------------------------------------
+// ENUMS
+// ---------------------------------------------------------------------------
+
+/// The classification dimension a category belongs to. An opportunity carries
+/// categories from several dimensions at once (type + industry + stage + ...).
+enum CategoryType {
+  OPPORTUNITY_TYPE
+  INDUSTRY
+  STARTUP_STAGE
+  FOUNDER_TYPE
+  PROVIDER_TYPE
+  GEOGRAPHY
+}
+
+/// Internal publishing status. Only PUBLISHED is ever visible to the public.
+enum WorkflowStatus {
+  DISCOVERED
+  EXTRACTING
+  PENDING_REVIEW
+  NEEDS_INFORMATION
+  DRAFT
+  APPROVED
+  PUBLISHED
+  REJECTED
+  ARCHIVED
+  UPDATE_PENDING_REVIEW
+}
+
+/// Public-facing application window state. Derived from dates unless overridden.
+enum LifecycleStatus {
+  UPCOMING
+  OPEN
+  CLOSING_SOON
+  CLOSED
+  ROLLING
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  AUTO_EXTRACTED
+  ADMIN_REVIEWED
+  ADMIN_VERIFIED
+}
+
+enum FundingType {
+  GRANT
+  EQUITY_FUNDING
+  EQUITY_FREE
+  ACCELERATOR
+  INCUBATOR
+  COMPETITION
+  CHALLENGE
+  SUBSIDY
+  FELLOWSHIP
+  LOAN
+  DEBT
+  PRIZE
+  INNOVATION_VOUCHER
+  RND_FUNDING
+  STIPEND
+  INVESTMENT
+}
+
+enum GeographyScope {
+  PAN_INDIA
+  STATE
+  CITY
+  INTERNATIONAL
+  REMOTE
+}
+
+enum ProviderSector {
+  GOVERNMENT
+  PRIVATE
+  ACADEMIC
+  NONPROFIT
+  MULTILATERAL
+}
+
+enum AdminRole {
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum LeadStage {
+  ANONYMOUS_VISITOR
+  LEAD
+  ENGAGED_LEAD
+  REGISTERED_USER
+  ACTIVE_STARTUP
+}
+
+enum SavedStatus {
+  SAVED
+  APPLIED
+  INTERESTED
+  NOT_RELEVANT
+}
+
+enum AlertFrequency {
+  IMMEDIATE
+  WEEKLY_DIGEST
+  DEADLINE_REMINDER
+}
+
+enum SourceType {
+  GOVERNMENT
+  UNIVERSITY
+  INCUBATOR
+  ACCELERATOR
+  CORPORATE
+  FOUNDATION
+  COMPETITION_PORTAL
+  FUNDING_AGENCY
+  INTERNATIONAL_ORGANISATION
+  INVESTOR
+  OTHER
+}
+
+/// How a source is traversed. See docs/ARCHITECTURE.md "URL types".
+enum SourceCrawlType {
+  SINGLE_PAGE
+  LISTING_PAGE
+  DOMAIN
+}
+
+enum CheckFrequency {
+  DAILY
+  EVERY_3_DAYS
+  WEEKLY
+  FORTNIGHTLY
+  MONTHLY
+  MANUAL
+}
+
+enum SourceHealth {
+  PENDING
+  HEALTHY
+  STALE
+  ERROR
+  BLOCKED
+  MANUAL_MONITORING_REQUIRED
+}
+
+enum CollectionClassification {
+  LIKELY_GRANT
+  POSSIBLE_FUNDING_OPPORTUNITY
+  EVENT
+  ACCELERATOR
+  COMPETITION
+  ARTICLE
+  NEWS
+  IRRELEVANT
+  UNKNOWN
+}
+
+enum CollectionStatus {
+  NEW
+  EXTRACTING
+  EXTRACTED
+  PROMOTED
+  IGNORED
+  FAILED
+}
+
+enum ReviewItemType {
+  NEW_OPPORTUNITY
+  UPDATE
+  POSSIBLE_DUPLICATE
+  LOW_CONFIDENCE
+  MISSING_INFORMATION
+  BROKEN_LINK
+  EXPIRED_OPPORTUNITY
+  ERROR_REPORT
+}
+
+enum ReviewStatus {
+  UNASSIGNED
+  ASSIGNED
+  UNDER_REVIEW
+  READY_FOR_APPROVAL
+  APPROVED
+  REJECTED
+}
+
+enum RejectionReason {
+  NOT_A_STARTUP_FUNDING_OPPORTUNITY
+  DUPLICATE
+  EXPIRED
+  INCORRECT_INFORMATION
+  UNRELIABLE_SOURCE
+  NOT_RELEVANT_TO_USERS
+  UNABLE_TO_VERIFY
+  SPAM
+  OTHER
+}
+
+enum JobType {
+  SOURCE_DISCOVER
+  SOURCE_FETCH
+  EXTRACT
+  RECHECK_OPPORTUNITY
+  LINK_CHECK
+  DIGEST_EMAIL
+  DEADLINE_REMINDER
+  EXPIRY_SWEEP
+}
+
+enum JobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+enum MessageChannel {
+  EMAIL
+  WHATSAPP
+}
+
+enum MessageStatus {
+  QUEUED
+  SENT
+  FAILED
+  SUPPRESSED
+}
+
+enum ErrorReportType {
+  INCORRECT_DEADLINE
+  BROKEN_APPLICATION_LINK
+  PROGRAMME_CLOSED
+  INCORRECT_ELIGIBILITY
+  INCORRECT_FUNDING_AMOUNT
+  OTHER
+}
+
+// ---------------------------------------------------------------------------
+// CATEGORIES — fully admin-managed, never hard-coded in the frontend
+// ---------------------------------------------------------------------------
+
+model Category {
+  id             String       @id @default(cuid())
+  name           String
+  slug           String       @unique
+  description    String?
+  categoryType   CategoryType
+  parentId       String?
+  icon           String?
+  displayOrder   Int          @default(0)
+  featured       Boolean      @default(false)
+  showOnHomepage Boolean      @default(false)
+  active         Boolean      @default(true)
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  parent   Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children Category[] @relation("CategoryTree")
+
+  opportunities   OpportunityCategory[]
+  leadInterests   LeadCategoryInterest[]
+  alertCategories AlertSubscriptionCategory[]
+  sources         Source[]
+  leadsByIndustry Lead[]                      @relation("LeadIndustry")
+  leadsByStage    Lead[]                      @relation("LeadStage")
+  leadsByFounder  Lead[]                      @relation("LeadFounderType")
+
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([categoryType, active, displayOrder])
+  @@index([parentId])
+  @@index([showOnHomepage, active])
+  @@index([featured, active])
+}
+
+/// Many-to-many. An opportunity legitimately belongs to many categories across
+/// several dimensions (e.g. Grant + Incubation Program + CSR Funding).
+model OpportunityCategory {
+  id            String   @id @default(cuid())
+  opportunityId String
+  categoryId    String
+  isPrimary     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  category    Category    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([opportunityId, categoryId])
+  @@index([categoryId])
+  @@index([opportunityId, isPrimary])
+}
+
+// ---------------------------------------------------------------------------
+// OPPORTUNITIES — the core asset
+// ---------------------------------------------------------------------------
+
+model Opportunity {
+  id              String  @id @default(cuid())
+  slug            String  @unique
+  title           String
+  providerName    String
+  providerLogoUrl String?
+  programmeName   String?
+
+  shortDescription String  @db.Text
+  fullDescription  String? @db.Text
+
+  // -- Funding -------------------------------------------------------------
+  fundingMin        Decimal?      @db.Decimal(18, 2)
+  fundingMax        Decimal?      @db.Decimal(18, 2)
+  currency          String        @default("INR")
+  fundingAmountText String?
+  isEquityFree      Boolean?
+  fundingTypes      FundingType[]
+
+  // -- Dates ---------------------------------------------------------------
+  applicationDeadline DateTime?
+  isRollingDeadline   Boolean   @default(false)
+  applicationOpenDate DateTime?
+  programmeStartDate  DateTime?
+  programmeEndDate    DateTime?
+  lastVerifiedAt      DateTime?
+
+  // -- Eligibility ---------------------------------------------------------
+  eligibilitySummary        String?        @db.Text
+  incorporationAgeMinMonths Int?
+  incorporationAgeMaxMonths Int?
+  companyTypes              String[]
+  technologies              String[]
+  geographyScope            GeographyScope @default(PAN_INDIA)
+  country                   String?        @default("India")
+  state                     String?
+  city                      String?
+  founderRequirements       String?        @db.Text
+  registrationRequirements  String?        @db.Text
+  revenueRequirement        String?        @db.Text
+  previousFundingLimit      String?        @db.Text
+  requiresDpiit             Boolean?
+  requiresMsmeUdyam         Boolean?
+  requiresStudentFounder    Boolean?
+  requiresWomenFounder      Boolean?
+  otherEligibility          String?        @db.Text
+
+  // -- Programme benefits --------------------------------------------------
+  benefitsSummary             String? @db.Text
+  offersMentoring             Boolean @default(false)
+  offersIncubation            Boolean @default(false)
+  offersNetworking            Boolean @default(false)
+  offersInvestorAccess        Boolean @default(false)
+  offersLabAccess             Boolean @default(false)
+  offersPilotOpportunities    Boolean @default(false)
+  offersCorporatePartnerships Boolean @default(false)
+  offersMarketAccess          Boolean @default(false)
+
+  applicationProcess String? @db.Text
+  requiredDocuments  String? @db.Text
+  selectionProcess   String? @db.Text
+  importantNotes     String? @db.Text
+
+  // -- Application ---------------------------------------------------------
+  applicationUrl          String?
+  applicationInstructions String? @db.Text
+  contactEmail            String?
+  officialSourceUrl       String
+
+  // -- Provider classification --------------------------------------------
+  providerSector ProviderSector?
+
+  // -- Internal / provenance ----------------------------------------------
+  sourceId             String?
+  originalSourceUrl    String?
+  sourceWebsite        String?
+  extractionDate       DateTime?
+  lastCheckedAt        DateTime?
+  contentLastUpdatedAt DateTime?
+  sourceConfidence     Float?
+  fieldConfidence      Json?
+
+  workflowStatus     WorkflowStatus     @default(DRAFT)
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  lifecycleOverride  LifecycleStatus?
+  isActive           Boolean            @default(true)
+  isFeatured         Boolean            @default(false)
+
+  approvedById  String?
+  approvedAt    DateTime?
+  publishedById String?
+  publishedAt   DateTime?
+  createdById   String?
+
+  // -- Counters used for "Most Popular" sorting and admin analytics --------
+  viewCount       Int @default(0)
+  unlockCount     Int @default(0)
+  saveCount       Int @default(0)
+  applyClickCount Int @default(0)
+  currentVersion  Int @default(1)
+
+  seoTitle       String?
+  seoDescription String?
+
+  /// Generated column maintained by Postgres (see the init migration).
+  /// Declared so Prisma does not plan to drop it; queried via lib/search.
+  searchVector Unsupported("tsvector")?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  source      Source?    @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  approvedBy  AdminUser? @relation("OpportunityApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+  publishedBy AdminUser? @relation("OpportunityPublishedBy", fields: [publishedById], references: [id], onDelete: SetNull)
+  createdBy   AdminUser? @relation("OpportunityCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  categories      OpportunityCategory[]
+  versions        OpportunityVersion[]
+  reviewItems     ReviewItem[]
+  duplicateOf     ReviewItem[]          @relation("ReviewDuplicateTarget")
+  savedBy         SavedOpportunity[]
+  activities      LeadActivity[]
+  errorReports    ErrorReport[]
+  collectionItems CollectionItem[]
+  analyticsEvents AnalyticsEvent[]
+
+  @@index([searchVector(ops: raw("tsvector_ops"))], type: Gin)
+  @@index([title(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([providerName(ops: raw("gin_trgm_ops"))], type: Gin)
+  @@index([workflowStatus, isActive, publishedAt(sort: Desc)])
+  @@index([workflowStatus, isActive])
+  @@index([applicationDeadline])
+  @@index([publishedAt])
+  @@index([sourceId])
+  @@index([state])
+  @@index([country])
+}
+
+/// Immutable snapshots. Grant data is never overwritten without history.
+model OpportunityVersion {
+  id            String    @id @default(cuid())
+  opportunityId String
+  versionNumber Int
+  snapshot      Json
+  changedFields String[]
+  changeSummary String?
+  sourceUrl     String?
+  createdAt     DateTime  @default(now())
+  createdById   String?
+  approvedById  String?
+  approvedAt    DateTime?
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  createdBy   AdminUser?  @relation("VersionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  approvedBy  AdminUser?  @relation("VersionApprovedBy", fields: [approvedById], references: [id], onDelete: SetNull)
+
+  @@unique([opportunityId, versionNumber])
+  @@index([opportunityId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// SOURCES & COLLECTION — automation may discover, never publish
+// ---------------------------------------------------------------------------
+
+model Source {
+  id           String          @id @default(cuid())
+  name         String
+  organisation String?
+  websiteUrl   String?
+  url          String
+  sourceType   SourceType      @default(OTHER)
+  crawlType    SourceCrawlType @default(SINGLE_PAGE)
+  country      String?         @default("India")
+  state        String?
+  categoryId   String?
+  notes        String?         @db.Text
+
+  checkFrequency CheckFrequency @default(WEEKLY)
+  enabled        Boolean        @default(true)
+
+  allowPaths  String[]
+  ignorePaths String[]
+  maxPages    Int      @default(40)
+  maxDepth    Int      @default(2)
+
+  // Per-source automation switches. AUTO PUBLISH deliberately does not exist.
+  autoCollect           Boolean @default(true)
+  autoExtract           Boolean @default(true)
+  autoCreateReviewItems Boolean @default(true)
+
+  robotsAllowed         Boolean?
+  robotsCheckedAt       DateTime?
+  health                SourceHealth @default(PENDING)
+  lastCheckedAt         DateTime?
+  lastSuccessfulCheckAt DateTime?
+  lastChangeDetectedAt  DateTime?
+  nextCheckAt           DateTime?
+  errorCount            Int          @default(0)
+  lastHttpStatus        Int?
+  lastError             String?      @db.Text
+
+  createdById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category        Category?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  createdBy       AdminUser?       @relation("SourceCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  opportunities   Opportunity[]
+  collectionItems CollectionItem[]
+  jobs            CrawlJob[]
+
+  @@index([enabled, nextCheckAt])
+  @@index([health])
+}
+
+/// Everything the crawler fetches lands here first — the Collection Inbox.
+/// Raw content never reaches the public site directly.
+model CollectionItem {
+  id           String  @id @default(cuid())
+  sourceId     String
+  url          String
+  canonicalUrl String?
+  pageTitle    String?
+  rawText      String? @db.Text
+  rawHtml      String? @db.Text
+  contentHash  String?
+  httpStatus   Int?
+
+  classification           CollectionClassification @default(UNKNOWN)
+  classificationConfidence Float?
+  classificationReason     String?                  @db.Text
+  status                   CollectionStatus         @default(NEW)
+
+  extractedData   Json?
+  fieldConfidence Json?
+  extractionError String? @db.Text
+
+  discoveredAt  DateTime  @default(now())
+  fetchedAt     DateTime?
+  extractedAt   DateTime?
+  lastCheckedAt DateTime?
+
+  opportunityId String?
+
+  source      Source       @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  opportunity Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+  reviewItems ReviewItem[]
+
+  @@unique([sourceId, url])
+  @@index([status, classification])
+  @@index([sourceId, discoveredAt])
+  @@index([contentHash])
+}
+
+/// The single gate between automation and the public database.
+model ReviewItem {
+  id     String         @id @default(cuid())
+  type   ReviewItemType
+  status ReviewStatus   @default(UNASSIGNED)
+
+  opportunityId    String?
+  collectionItemId String?
+  duplicateOfId    String?
+  similarityScore  Float?
+
+  title             String
+  extractedData     Json?
+  fieldConfidence   Json?
+  proposedChanges   Json?
+  overallConfidence Float?
+
+  assignedReviewerId String?
+  reviewNotes        String? @db.Text
+  priority           Int     @default(0)
+
+  rejectionReason RejectionReason?
+  rejectionNote   String?          @db.Text
+
+  resolvedById String?
+  resolvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  opportunity      Opportunity?    @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  duplicateOf      Opportunity?    @relation("ReviewDuplicateTarget", fields: [duplicateOfId], references: [id], onDelete: SetNull)
+  collectionItem   CollectionItem? @relation(fields: [collectionItemId], references: [id], onDelete: SetNull)
+  assignedReviewer AdminUser?      @relation("ReviewAssignee", fields: [assignedReviewerId], references: [id], onDelete: SetNull)
+  resolvedBy       AdminUser?      @relation("ReviewResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@index([type, status])
+  @@index([assignedReviewerId, status])
+  @@index([createdAt])
+}
+
+/// Rejections are remembered so the crawler does not resurface the same page.
+model RejectedUrl {
+  id        String          @id @default(cuid())
+  url       String          @unique
+  reason    RejectionReason
+  note      String?
+  createdAt DateTime        @default(now())
+}
+
+model CrawlJob {
+  id       String    @id @default(cuid())
+  type     JobType
+  status   JobStatus @default(QUEUED)
+  sourceId String?
+  payload  Json?
+  result   Json?
+
+  attempts     Int       @default(0)
+  maxAttempts  Int       @default(3)
+  scheduledFor DateTime  @default(now())
+  startedAt    DateTime?
+  finishedAt   DateTime?
+  error        String?   @db.Text
+  createdAt    DateTime  @default(now())
+
+  source Source? @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@index([status, scheduledFor])
+  @@index([sourceId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// PEOPLE — anonymous visitors, leads, registered startups, admins
+// ---------------------------------------------------------------------------
+
+/// Pre-identification browsing. Promoted to a Lead on first capture.
+model Visitor {
+  id          String   @id @default(cuid())
+  anonId      String   @unique
+  leadId      String?
+  firstSeenAt DateTime @default(now())
+  lastSeenAt  DateTime @default(now())
+  landingPath String?
+  referrer    String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmTerm     String?
+  utmContent  String?
+  userAgent   String?
+
+  lead       Lead?            @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  activities LeadActivity[]
+  events     AnalyticsEvent[]
+
+  @@index([leadId])
+}
+
+model Lead {
+  id          String  @id @default(cuid())
+  email       String  @unique
+  name        String
+  whatsapp    String?
+  startupName String?
+
+  // Progressive profiling — collected gradually, never all at once.
+  website               String?
+  linkedinUrl           String?
+  city                  String?
+  state                 String?
+  country               String?  @default("India")
+  industryCategoryId    String?
+  stageCategoryId       String?
+  founderTypeCategoryId String?
+  yearFounded           Int?
+  fundingRaised         String?
+  revenueRange          String?
+  teamSize              String?
+  dpiitStatus           Boolean?
+  udyamStatus           Boolean?
+  fundingRequirementMin Decimal? @db.Decimal(18, 2)
+  fundingRequirementMax Decimal? @db.Decimal(18, 2)
+
+  leadStage         LeadStage @default(LEAD)
+  leadScore         Int       @default(0)
+  profileCompletion Int       @default(0)
+
+  emailMarketingConsent    Boolean   @default(false)
+  whatsappMarketingConsent Boolean   @default(false)
+  consentTimestamp         DateTime?
+  consentSource            String?
+  unsubscribedAt           DateTime?
+
+  leadSource  String?
+  landingPath String?
+  referrer    String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmTerm     String?
+  utmContent  String?
+
+  firstVisitAt   DateTime @default(now())
+  lastVisitAt    DateTime @default(now())
+  lastActivityAt DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  industryCategory    Category? @relation("LeadIndustry", fields: [industryCategoryId], references: [id], onDelete: SetNull)
+  stageCategory       Category? @relation("LeadStage", fields: [stageCategoryId], references: [id], onDelete: SetNull)
+  founderTypeCategory Category? @relation("LeadFounderType", fields: [founderTypeCategoryId], references: [id], onDelete: SetNull)
+
+  visitors      Visitor[]
+  activities    LeadActivity[]
+  saved         SavedOpportunity[]
+  interests     LeadCategoryInterest[]
+  subscriptions AlertSubscription[]
+  sessions      LeadSession[]
+  loginTokens   LoginToken[]
+  messages      OutboundMessage[]
+  events        AnalyticsEvent[]
+
+  @@index([leadStage, lastActivityAt])
+  @@index([leadScore])
+  @@index([state])
+  @@index([emailMarketingConsent])
+}
+
+model LeadCategoryInterest {
+  id         String   @id @default(cuid())
+  leadId     String
+  categoryId String
+  source     String?
+  weight     Int      @default(1)
+  createdAt  DateTime @default(now())
+
+  lead     Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([leadId, categoryId])
+  @@index([categoryId])
+}
+
+model LeadActivity {
+  id            String   @id @default(cuid())
+  leadId        String?
+  visitorId     String?
+  type          String
+  description   String
+  opportunityId String?
+  categoryId    String?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  lead        Lead?        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  visitor     Visitor?     @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  opportunity Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+
+  @@index([leadId, createdAt])
+  @@index([visitorId, createdAt])
+}
+
+model SavedOpportunity {
+  id            String      @id @default(cuid())
+  leadId        String
+  opportunityId String
+  status        SavedStatus @default(SAVED)
+  notes         String?     @db.Text
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  lead        Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@unique([leadId, opportunityId])
+  @@index([opportunityId])
+}
+
+model AlertSubscription {
+  id         String         @id @default(cuid())
+  leadId     String
+  frequency  AlertFrequency @default(WEEKLY_DIGEST)
+  channel    MessageChannel @default(EMAIL)
+  active     Boolean        @default(true)
+  states     String[]
+  providers  String[]
+  lastSentAt DateTime?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  lead       Lead                        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  categories AlertSubscriptionCategory[]
+
+  @@unique([leadId, frequency, channel])
+  @@index([active, frequency])
+}
+
+model AlertSubscriptionCategory {
+  id             String @id @default(cuid())
+  subscriptionId String
+  categoryId     String
+
+  subscription AlertSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  category     Category          @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionId, categoryId])
+}
+
+/// Low-friction identity: a signed cookie backed by a hashed server session.
+model LeadSession {
+  id         String   @id @default(cuid())
+  leadId     String
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+  userAgent  String?
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@index([expiresAt])
+}
+
+/// Single-use magic-link token. No passwords on the public side.
+model LoginToken {
+  id        String    @id @default(cuid())
+  leadId    String
+  tokenHash String    @unique
+  purpose   String    @default("magic_link")
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+}
+
+// ---------------------------------------------------------------------------
+// ADMIN
+// ---------------------------------------------------------------------------
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  role         AdminRole @default(ADMIN)
+  active       Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions               AdminSession[]
+  auditLogs              AuditLog[]
+  createdOpportunities   Opportunity[]        @relation("OpportunityCreatedBy")
+  approvedOpportunities  Opportunity[]        @relation("OpportunityApprovedBy")
+  publishedOpportunities Opportunity[]        @relation("OpportunityPublishedBy")
+  createdVersions        OpportunityVersion[] @relation("VersionCreatedBy")
+  approvedVersions       OpportunityVersion[] @relation("VersionApprovedBy")
+  assignedReviews        ReviewItem[]         @relation("ReviewAssignee")
+  resolvedReviews        ReviewItem[]         @relation("ReviewResolver")
+  createdSources         Source[]             @relation("SourceCreatedBy")
+  resolvedErrorReports   ErrorReport[]        @relation("ErrorReportResolver")
+}
+
+model AdminSession {
+  id          String   @id @default(cuid())
+  adminUserId String
+  tokenHash   String   @unique
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  lastUsedAt  DateTime @default(now())
+  ipAddress   String?
+  userAgent   String?
+
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId])
+  @@index([expiresAt])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  adminUserId String?
+  action      String
+  entityType  String
+  entityId    String?
+  summary     String?
+  before      Json?
+  after       Json?
+  createdAt   DateTime @default(now())
+
+  adminUser AdminUser? @relation(fields: [adminUserId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([adminUserId, createdAt])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// SUPPORTING
+// ---------------------------------------------------------------------------
+
+model ErrorReport {
+  id            String          @id @default(cuid())
+  opportunityId String
+  type          ErrorReportType
+  message       String          @db.Text
+  reporterEmail String?
+  resolved      Boolean         @default(false)
+  resolvedById  String?
+  resolvedAt    DateTime?
+  createdAt     DateTime        @default(now())
+
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  resolvedBy  AdminUser?  @relation("ErrorReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@index([resolved, createdAt])
+}
+
+model AnalyticsEvent {
+  id            String   @id @default(cuid())
+  eventType     String
+  visitorId     String?
+  leadId        String?
+  opportunityId String?
+  categoryId    String?
+  path          String?
+  metadata      Json?
+  createdAt     DateTime @default(now())
+
+  visitor     Visitor?     @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  lead        Lead?        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  opportunity Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: SetNull)
+
+  @@index([eventType, createdAt])
+  @@index([createdAt])
+  @@index([opportunityId, eventType])
+}
+
+/// Every outbound email / WhatsApp message. Doubles as the local fallback
+/// "outbox" when no provider credentials are configured.
+model OutboundMessage {
+  id         String         @id @default(cuid())
+  leadId     String?
+  channel    MessageChannel
+  toAddress  String
+  template   String
+  subject    String?
+  body       String         @db.Text
+  status     MessageStatus  @default(QUEUED)
+  providerId String?
+  provider   String?
+  error      String?        @db.Text
+  sentAt     DateTime?
+  createdAt  DateTime       @default(now())
+
+  lead Lead? @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([leadId, createdAt])
+}
+
+/// Admin-editable runtime configuration (e.g. which fields are lead-gated).
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
