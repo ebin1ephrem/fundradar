@@ -12,7 +12,10 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "smoke": "node tests/phase1.smoke.mjs"
+    "smoke": "node tests/phase1.smoke.mjs && node tests/phase2.smoke.mjs",
+    "check:search": "tsx --tsconfig tsconfig.scripts.json tests/search.check.ts",
+    "db:fixtures": "tsx prisma/dev-fixtures.ts",
+    "smoke:public": "node tests/phase2.smoke.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.122.0",
@@ -28,6 +31,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "resend": "^6.24.0",
+    "server-only": "^0.0.1",
     "tailwind-merge": "^3.6.0",
     "zod": "^4.4.3"
   },

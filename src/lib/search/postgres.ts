@@ -1,0 +1,343 @@
+import "server-only";
+import { Prisma } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
+import type {
+  OpportunityFilters,
+  SearchHit,
+  SearchProvider,
+  SearchResult,
+} from "./types";
+
+const DEFAULT_PER_PAGE = 24;
+const MAX_PER_PAGE = 60;
+
+/**
+ * Postgres full-text search.
+ *
+ * Ranking combines the weighted `searchVector` generated column with a trigram
+ * similarity score on the title, so "biotec" still finds "BioTech" and an exact
+ * title match still outranks a body-text mention.
+ *
+ * The whole query is one round trip rather than "find ids, then hydrate", so
+ * relevance ordering and pagination stay consistent.
+ */
+export class PostgresSearchProvider implements SearchProvider {
+  async search(filters: OpportunityFilters): Promise<SearchResult> {
+    const page = Math.max(1, filters.page ?? 1);
+    const perPage = Math.min(MAX_PER_PAGE, Math.max(1, filters.perPage ?? DEFAULT_PER_PAGE));
+    const where = await buildWhere(filters);
+    const parsed = parseQuery(filters.q);
+    const rank = rankExpression(parsed);
+
+    const rows = await prisma.$queryRaw<RawRow[]>`
+      SELECT
+        o.id, o.slug, o.title, o."providerName", o."providerLogoUrl",
+        o."shortDescription", o."fundingMin", o."fundingMax", o.currency,
+        o."fundingAmountText", o."isEquityFree", o."fundingTypes",
+        o."applicationDeadline", o."isRollingDeadline", o."applicationOpenDate",
+        o."lifecycleOverride", o."geographyScope", o.country, o.state,
+        o."publishedAt", o."updatedAt", o."viewCount",
+        ${rank} AS rank,
+        COUNT(*) OVER () AS total_count
+      FROM "Opportunity" o
+      WHERE ${where}
+      ORDER BY ${orderBy(filters, rank)}
+      LIMIT ${perPage} OFFSET ${(page - 1) * perPage}
+    `;
+
+    const total = rows.length ? Number(rows[0].total_count) : 0;
+    const hits = await attachCategories(rows);
+
+    return {
+      hits,
+      total,
+      page,
+      perPage,
+      pages: Math.max(1, Math.ceil(total / perPage)),
+    };
+  }
+
+  async facets(
+    filters: OpportunityFilters,
+    categorySlugs: string[],
+  ): Promise<Map<string, number>> {
+    if (categorySlugs.length === 0) return new Map();
+    const where = await buildWhere(filters);
+
+    // Counts roll descendants up into their parent, so "Grants" reflects
+    // everything filed under Prototype Grants, R&D Grants and the rest.
+    const rows = await prisma.$queryRaw<{ slug: string; count: bigint }[]>`
+      WITH RECURSIVE tree AS (
+        SELECT id AS root_id, id, slug AS root_slug
+        FROM "Category"
+        WHERE slug IN (${Prisma.join(categorySlugs)})
+        UNION ALL
+        SELECT t.root_id, c.id, t.root_slug
+        FROM "Category" c
+        JOIN tree t ON c."parentId" = t.id
+      ),
+      matching AS (
+        SELECT o.id FROM "Opportunity" o WHERE ${where}
+      )
+      SELECT t.root_slug AS slug, COUNT(DISTINCT oc."opportunityId") AS count
+      FROM tree t
+      JOIN "OpportunityCategory" oc ON oc."categoryId" = t.id
+      JOIN matching m ON m.id = oc."opportunityId"
+      GROUP BY t.root_slug
+    `;
+
+    return new Map(rows.map((r) => [r.slug, Number(r.count)]));
+  }
+}
+
+type RawRow = Omit<SearchHit, "categories" | "fundingMin" | "fundingMax"> & {
+  fundingMin: Prisma.Decimal | null;
+  fundingMax: Prisma.Decimal | null;
+  rank: number;
+  total_count: bigint;
+};
+
+type ParsedQuery = {
+  /** The raw phrase, for trigram similarity. */
+  phrase: string;
+  /** Every term ANDed — a precise match, ranked highest. */
+  andQuery: string;
+  /** Every term ORed — keeps recall when one word is missing. */
+  orQuery: string;
+  /** ILIKE patterns used to search category names. */
+  patterns: string[];
+};
+
+/**
+ * Founders type things like "women founder grants", where no single record
+ * contains all three words. ANDing every term (what plainto_tsquery and
+ * websearch_to_tsquery both do) returns nothing for those. So terms are ORed
+ * for matching and the AND form is used only as a ranking bonus, which keeps
+ * precise queries at the top without losing the rest.
+ *
+ * Terms are reduced to letters and digits before being interpolated into a
+ * tsquery, so nothing a visitor types can alter the query's structure.
+ */
+function parseQuery(q?: string): ParsedQuery | null {
+  const phrase = (q ?? "").trim().slice(0, 120);
+  const terms = (phrase.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [])
+    .filter((t) => t.length > 1)
+    .slice(0, 8);
+
+  if (terms.length === 0) return null;
+
+  const prefixed = terms.map((t) => `${t.slice(0, 40)}:*`);
+  return {
+    phrase,
+    andQuery: prefixed.join(" & "),
+    orQuery: prefixed.join(" | "),
+    patterns: terms.map((t) => `%${t}%`),
+  };
+}
+
+async function buildWhere(filters: OpportunityFilters): Promise<Prisma.Sql> {
+  const clauses: Prisma.Sql[] = [
+    Prisma.sql`o."workflowStatus" = 'PUBLISHED'`,
+    Prisma.sql`o."isActive" = true`,
+  ];
+
+  const parsed = parseQuery(filters.q);
+  if (parsed) {
+    clauses.push(Prisma.sql`(
+      o."searchVector" @@ to_tsquery('english', ${parsed.orQuery})
+      OR ${parsed.phrase} <% o."title"
+      OR ${parsed.phrase} <% o."providerName"
+      OR EXISTS (
+        SELECT 1 FROM "OpportunityCategory" oc
+        JOIN "Category" c ON c.id = oc."categoryId"
+        WHERE oc."opportunityId" = o.id
+          AND c.name ILIKE ANY(ARRAY[${Prisma.join(parsed.patterns)}])
+      )
+    )`);
+  }
+
+  // Within a dimension the selections are alternatives; across dimensions they
+  // narrow. Picking "Grants" and "ClimateTech" means both must hold.
+  for (const group of await groupCategorySlugs(filters.categorySlugs)) {
+    clauses.push(Prisma.sql`EXISTS (
+      WITH RECURSIVE tree AS (
+        SELECT id FROM "Category" WHERE id IN (${Prisma.join(group)})
+        UNION ALL
+        SELECT c.id FROM "Category" c JOIN tree t ON c."parentId" = t.id
+      )
+      SELECT 1 FROM "OpportunityCategory" oc
+      JOIN tree ON tree.id = oc."categoryId"
+      WHERE oc."opportunityId" = o.id
+    )`);
+  }
+
+  if (filters.fundingTypes?.length) {
+    clauses.push(
+      Prisma.sql`o."fundingTypes" && ARRAY[${Prisma.join(
+        filters.fundingTypes,
+      )}]::"FundingType"[]`,
+    );
+  }
+
+  if (filters.fundingAtLeast !== undefined) {
+    clauses.push(
+      Prisma.sql`COALESCE(o."fundingMax", o."fundingMin") >= ${filters.fundingAtLeast}`,
+    );
+  }
+  if (filters.fundingAtMost !== undefined) {
+    clauses.push(
+      Prisma.sql`COALESCE(o."fundingMin", o."fundingMax") <= ${filters.fundingAtMost}`,
+    );
+  }
+  if (filters.currency) {
+    clauses.push(Prisma.sql`o.currency = ${filters.currency}`);
+  }
+
+  if (filters.state) {
+    clauses.push(Prisma.sql`o.state ILIKE ${filters.state}`);
+  }
+  if (filters.country) {
+    clauses.push(Prisma.sql`o.country ILIKE ${filters.country}`);
+  }
+  if (filters.geographyScopes?.length) {
+    clauses.push(
+      Prisma.sql`o."geographyScope" = ANY(ARRAY[${Prisma.join(
+        filters.geographyScopes,
+      )}]::"GeographyScope"[])`,
+    );
+  }
+  if (filters.providerSectors?.length) {
+    clauses.push(
+      Prisma.sql`o."providerSector" = ANY(ARRAY[${Prisma.join(
+        filters.providerSectors,
+      )}]::"ProviderSector"[])`,
+    );
+  }
+
+  if (filters.equityFreeOnly) {
+    clauses.push(Prisma.sql`o."isEquityFree" = true`);
+  }
+  if (filters.registrationRequired) {
+    clauses.push(
+      Prisma.sql`(o."requiresDpiit" = true OR o."requiresMsmeUdyam" = true)`,
+    );
+  }
+
+  if (filters.closingWithinDays !== undefined) {
+    clauses.push(Prisma.sql`
+      o."isRollingDeadline" = false
+      AND o."applicationDeadline" IS NOT NULL
+      AND o."applicationDeadline" >= NOW()
+      AND o."applicationDeadline" <= NOW() + (${filters.closingWithinDays} * INTERVAL '1 day')
+    `);
+  }
+
+  // Closed programmes stay in the database and stay searchable, but they are
+  // out of the default view because a founder cannot act on them.
+  if (!filters.includeClosed) {
+    clauses.push(Prisma.sql`(
+      o."isRollingDeadline" = true
+      OR o."applicationDeadline" IS NULL
+      OR o."applicationDeadline" >= CURRENT_DATE
+      OR o."lifecycleOverride" IN ('OPEN', 'ROLLING', 'CLOSING_SOON')
+    )`);
+  }
+
+  return Prisma.join(clauses, " AND ");
+}
+
+/** Resolves slugs to ids, bucketed by the dimension they belong to. */
+async function groupCategorySlugs(slugs?: string[]): Promise<string[][]> {
+  if (!slugs?.length) return [];
+  const rows = await prisma.category.findMany({
+    where: { slug: { in: slugs }, active: true },
+    select: { id: true, categoryType: true },
+  });
+
+  const byType = new Map<string, string[]>();
+  for (const row of rows) {
+    const list = byType.get(row.categoryType) ?? [];
+    list.push(row.id);
+    byType.set(row.categoryType, list);
+  }
+  return [...byType.values()];
+}
+
+/**
+ * A precise all-terms match outranks a partial one; a title hit outranks a hit
+ * buried in the body; a category hit still counts so "climate" finds records
+ * tagged ClimateTech even when the word never appears in their text.
+ */
+function rankExpression(parsed: ParsedQuery | null): Prisma.Sql {
+  if (!parsed) return Prisma.sql`0`;
+  return Prisma.sql`(
+    ts_rank(o."searchVector", to_tsquery('english', ${parsed.andQuery})) * 8
+    + ts_rank(o."searchVector", to_tsquery('english', ${parsed.orQuery})) * 3
+    + word_similarity(${parsed.phrase}, o."title") * 4
+    + word_similarity(${parsed.phrase}, o."providerName") * 2
+    + CASE WHEN EXISTS (
+        SELECT 1 FROM "OpportunityCategory" oc
+        JOIN "Category" c ON c.id = oc."categoryId"
+        WHERE oc."opportunityId" = o.id
+          AND c.name ILIKE ANY(ARRAY[${Prisma.join(parsed.patterns)}])
+      ) THEN 1.5 ELSE 0 END
+  )`;
+}
+
+function orderBy(filters: OpportunityFilters, rank: Prisma.Sql): Prisma.Sql {
+  const sort = filters.sort ?? (filters.q ? "relevance" : "newest");
+  const newest = Prisma.sql`o."publishedAt" DESC NULLS LAST, o."createdAt" DESC`;
+
+  switch (sort) {
+    case "closing":
+      // Rolling and undated programmes have no deadline to be closing against.
+      return Prisma.sql`
+        (o."isRollingDeadline" = true OR o."applicationDeadline" IS NULL) ASC,
+        o."applicationDeadline" ASC NULLS LAST, ${newest}`;
+    case "largest":
+      return Prisma.sql`COALESCE(o."fundingMax", o."fundingMin") DESC NULLS LAST, ${newest}`;
+    case "updated":
+      return Prisma.sql`o."updatedAt" DESC`;
+    case "popular":
+      return Prisma.sql`o."viewCount" DESC, o."saveCount" DESC, ${newest}`;
+    case "relevance":
+      return filters.q
+        ? Prisma.sql`${rank} DESC, ${newest}`
+        : newest;
+    default:
+      return newest;
+  }
+}
+
+async function attachCategories(rows: RawRow[]): Promise<SearchHit[]> {
+  if (rows.length === 0) return [];
+
+  const links = await prisma.opportunityCategory.findMany({
+    where: { opportunityId: { in: rows.map((r) => r.id) } },
+    select: {
+      opportunityId: true,
+      isPrimary: true,
+      category: { select: { name: true, slug: true, categoryType: true } },
+    },
+    orderBy: [{ isPrimary: "desc" }, { category: { displayOrder: "asc" } }],
+  });
+
+  const byOpportunity = new Map<string, SearchHit["categories"]>();
+  for (const link of links) {
+    const list = byOpportunity.get(link.opportunityId) ?? [];
+    list.push({
+      name: link.category.name,
+      slug: link.category.slug,
+      categoryType: link.category.categoryType,
+      isPrimary: link.isPrimary,
+    });
+    byOpportunity.set(link.opportunityId, list);
+  }
+
+  return rows.map((row) => ({
+    ...row,
+    fundingMin: row.fundingMin?.toString() ?? null,
+    fundingMax: row.fundingMax?.toString() ?? null,
+    categories: byOpportunity.get(row.id) ?? [],
+  }));
+}

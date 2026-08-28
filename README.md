@@ -56,14 +56,31 @@ when you add its key, and has a working local fallback until you do.
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:seed` | Seed categories, settings and the first admin |
 | `npm run db:studio` | Prisma Studio |
-| `npm run smoke` | Browser smoke test against a running server (see below) |
+| `npm run db:fixtures` | Load sample opportunities for local development |
+| `npm run check:search` | Exercise the search provider directly |
+| `npm run smoke` | Browser smoke tests against a running server (see below) |
 
-### Smoke test
+### Sample data
 
-`tests/phase1.smoke.mjs` drives a real browser through the admin flow: the auth
-gate, a wrong-password rejection, sign-in, creating a category, creating and
-publishing an opportunity across three category dimensions, the publication gate
-refusing an incomplete record, the audit trail, and sign-out revoking access.
+`npm run db:fixtures` loads fourteen invented funding programmes so the
+directory, search, filters and category pages have something to show locally.
+Every provider in it is fictional and the script refuses to run against a
+production database.
+
+### Smoke tests
+
+Two browser suites, 49 checks between them.
+
+`tests/phase1.smoke.mjs` — the admin flow: the auth gate, a wrong-password
+rejection, sign-in, creating a category, creating and publishing an opportunity
+across three category dimensions, the publication gate refusing an incomplete
+record, the audit trail, and sign-out revoking access.
+
+`tests/phase2.smoke.mjs` — the public site: typo-tolerant and multi-word search,
+category-aware matching, faceted filtering across dimensions, sorting, closed
+programmes hidden by default, the detail page's sections and trust block,
+category landing pages, the `/grants` redirect, 404s, filtering with JavaScript
+disabled, and no horizontal overflow on mobile.
 
 ```bash
 npm run build && npx next start -p 3100 &
