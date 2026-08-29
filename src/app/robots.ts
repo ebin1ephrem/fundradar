@@ -6,6 +6,10 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
+        userAgent: "GPTBot",
+        disallow: "/",
+      },
+      {
         userAgent: "*",
         allow: "/",
         // Nothing behind these paths belongs in an index: the console is

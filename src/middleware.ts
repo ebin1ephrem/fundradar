@@ -15,6 +15,18 @@ const VISITOR_MAX_AGE = 60 * 60 * 24 * 365;
  */
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+  const userAgent = request.headers.get("user-agent")?.toLowerCase() ?? "";
+
+  // GPTBot followed faceted opportunity links every few seconds and exhausted
+  // the database operation allowance in less than a day. Reject it at the
+  // edge, before a page render can open a database connection. This does not
+  // affect normal visitors or search-engine crawlers.
+  if (userAgent.includes("gptbot")) {
+    return new NextResponse(null, {
+      status: 403,
+      headers: { "X-Robots-Tag": "noindex, nofollow" },
+    });
+  }
 
   if (pathname.startsWith("/admin")) {
     if (pathname === "/admin/login" || pathname.startsWith("/admin/logout")) {
