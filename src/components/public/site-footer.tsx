@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_CACHE_SECONDS, PUBLIC_CATALOG_TAG } from "@/lib/cache-tags";
 import { brand } from "@/content/copy";
 
 const EXPLORE = [
@@ -16,8 +18,8 @@ const COMPANY = [
   { href: "/report", label: "Report an error" },
 ];
 
-export async function SiteFooter() {
-  const categories = await prisma.category.findMany({
+const getFooterCategories = unstable_cache(async () => {
+  return prisma.category.findMany({
     where: {
       active: true,
       parentId: null,
@@ -29,6 +31,13 @@ export async function SiteFooter() {
     select: { name: true, slug: true },
     take: 6,
   });
+}, ["public-footer-categories-v1"], {
+  revalidate: PUBLIC_CACHE_SECONDS,
+  tags: [PUBLIC_CATALOG_TAG],
+});
+
+export async function SiteFooter() {
+  const categories = await getFooterCategories();
 
   return (
     <footer className="border-t border-line bg-subtle">

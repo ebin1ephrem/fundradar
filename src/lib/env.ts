@@ -25,6 +25,7 @@ export const env = {
   googleClientSecret: opt("GOOGLE_CLIENT_SECRET"),
 
   cronSecret: opt("CRON_SECRET"),
+  crawlerEnabled: opt("CRAWLER_ENABLED") === "true",
   crawlerUserAgent:
     opt("CRAWLER_USER_AGENT") ??
     "FundRadarBot/1.0 (+https://fundradar.example/bot; startup funding directory)",

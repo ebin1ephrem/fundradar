@@ -1,9 +1,10 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_CATALOG_TAG } from "@/lib/cache-tags";
 import { audit } from "@/lib/audit";
 import { requireAdmin } from "@/lib/auth/admin";
 import { uniqueSlug } from "@/lib/utils";
@@ -22,6 +23,7 @@ export type OpportunityFormState = {
 };
 
 function revalidateOpportunityViews(slug?: string) {
+  revalidateTag(PUBLIC_CATALOG_TAG);
   revalidatePath("/admin/opportunities");
   revalidatePath("/");
   revalidatePath("/opportunities");

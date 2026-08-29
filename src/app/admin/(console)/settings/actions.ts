@@ -1,10 +1,11 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { requireAdmin } from "@/lib/auth/admin";
 import { audit } from "@/lib/audit";
 import { setSetting } from "@/lib/settings";
 import { GATEABLE_SECTIONS } from "@/lib/settings-schema";
+import { PUBLIC_SETTINGS_TAG } from "@/lib/cache-tags";
 
 export type SettingsState = { ok?: boolean; error?: string };
 
@@ -30,6 +31,7 @@ export async function updateGateSettingsAction(
 
   await setSetting("gatedSections", sections);
   await setSetting("leadGate", gate);
+  revalidateTag(PUBLIC_SETTINGS_TAG);
 
   await audit({
     adminUserId: admin.id,

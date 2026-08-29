@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { CheckFrequency, SourceCrawlType, SourceType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { env } from "@/lib/env";
 import { audit } from "@/lib/audit";
 import { requireAdmin } from "@/lib/auth/admin";
 import { canonicaliseUrl } from "@/lib/ingestion/normalise";
@@ -199,6 +200,14 @@ export async function toggleSourceAction(formData: FormData) {
 export async function runSourceNowAction(formData: FormData) {
   const admin = await requireAdmin();
   const id = String(formData.get("id") ?? "");
+
+  if (!env.crawlerEnabled) {
+    redirect(
+      `/admin/sources/${id}?error=${encodeURIComponent(
+        "The crawler is currently paused. Enable it before running a source.",
+      )}`,
+    );
+  }
 
   const source = await prisma.source.findUnique({ where: { id } });
   if (!source) return;

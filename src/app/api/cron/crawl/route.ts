@@ -14,6 +14,12 @@ export const dynamic = "force-dynamic";
  * is worked through across several firings rather than in one long run.
  */
 export async function GET(request: Request) {
+  // Operational kill switch: keep this before authentication and, crucially,
+  // before any Prisma query. Crawling stays off until it is explicitly enabled.
+  if (!env.crawlerEnabled) {
+    return NextResponse.json({ disabled: true, ran: 0, queued: 0 });
+  }
+
   const authorised = isAuthorised(request);
   if (!authorised) {
     return NextResponse.json({ error: "Not authorised" }, { status: 401 });

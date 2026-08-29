@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, ArrowUpRight, ShieldCheck, Timer, Waypoints } from "lucide-react";
 import { search } from "@/lib/search";
-import { homepageCategories } from "@/lib/queries/public";
-import { prisma } from "@/lib/prisma";
-import { publiclyVisible } from "@/lib/visibility";
+import { homepageCategories, publicProviderCount } from "@/lib/queries/public";
 import { OpportunityCard } from "@/components/public/opportunity-card";
 import { SearchBar } from "@/components/public/search-bar";
 import { Icon } from "@/components/admin/icon";
@@ -45,13 +43,7 @@ export default async function HomePage() {
     {},
     categories.map((c) => c.slug),
   );
-  const providerCount = await prisma.opportunity
-    .findMany({
-      where: publiclyVisible,
-      distinct: ["providerName"],
-      select: { providerName: true },
-    })
-    .then((rows) => rows.length);
+  const providerCount = await publicProviderCount();
 
   const savedIds = await savedOpportunityIds();
   const total = totals.total;

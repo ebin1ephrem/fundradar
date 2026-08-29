@@ -33,14 +33,10 @@ export const getViewer = cache(async (): Promise<Viewer> => {
     if (session && session.expiresAt > new Date()) lead = session.lead;
   }
 
-  const visitor = anonId
-    ? await prisma.visitor.findUnique({
-        where: { anonId },
-        select: { id: true },
-      })
-    : null;
-
-  return { visitorId: visitor?.id ?? null, anonId, lead };
+  // Anonymous page renders do not need a database lookup. The tracking
+  // endpoint creates/resolves the Visitor row only when it records an event.
+  // This removes one Prisma operation from every anonymous public page view.
+  return { visitorId: null, anonId, lead };
 });
 
 /** True once someone has given their details — used to stop re-prompting. */

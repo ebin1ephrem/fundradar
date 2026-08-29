@@ -49,6 +49,23 @@ export function TrackView(event: TrackEvent) {
   useEffect(() => {
     if (sent.current) return;
     sent.current = true;
+
+    // Count a page/event once per browser tab session. Back/forward navigation
+    // should not multiply Prisma writes for the same view.
+    const eventKey = [
+      "fr:tracked",
+      event.type,
+      event.opportunityId ?? "",
+      event.categoryId ?? "",
+      window.location.pathname,
+    ].join(":");
+    try {
+      if (sessionStorage.getItem(eventKey)) return;
+      sessionStorage.setItem(eventKey, "1");
+    } catch {
+      // Tracking still works when storage is unavailable.
+    }
+
     track(event);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

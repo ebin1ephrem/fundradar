@@ -1,7 +1,9 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { PUBLIC_WORKFLOW_STATUSES } from "@/lib/visibility";
+import { PUBLIC_CACHE_SECONDS, PUBLIC_CATALOG_TAG } from "@/lib/cache-tags";
 import { parseQuery, type ParsedQuery } from "./query";
 import type {
   OpportunityFilters,
@@ -25,13 +27,31 @@ const MAX_PER_PAGE = 60;
  */
 export class PostgresSearchProvider implements SearchProvider {
   async search(filters: OpportunityFilters): Promise<SearchResult> {
-    const page = Math.max(1, filters.page ?? 1);
-    const perPage = Math.min(MAX_PER_PAGE, Math.max(1, filters.perPage ?? DEFAULT_PER_PAGE));
-    const where = await buildWhere(filters);
-    const parsed = parseQuery(filters.q);
-    const rank = rankExpression(parsed);
+    return cachedSearch(filters);
+  }
 
-    const rows = await prisma.$queryRaw<RawRow[]>`
+  async facets(
+    filters: OpportunityFilters,
+    categorySlugs: string[],
+  ): Promise<Map<string, number>> {
+    if (categorySlugs.length === 0) return new Map();
+    return new Map(await cachedFacets(filters, categorySlugs));
+  }
+}
+
+const cachedSearch = unstable_cache(async (
+  filters: OpportunityFilters,
+): Promise<SearchResult> => {
+  const page = Math.max(1, filters.page ?? 1);
+  const perPage = Math.min(
+    MAX_PER_PAGE,
+    Math.max(1, filters.perPage ?? DEFAULT_PER_PAGE),
+  );
+  const where = await buildWhere(filters);
+  const parsed = parseQuery(filters.q);
+  const rank = rankExpression(parsed);
+
+  const rows = await prisma.$queryRaw<RawRow[]>`
       SELECT
         o.id, o.slug, o.title, o."providerName", o."providerLogoUrl",
         o."shortDescription", o."fundingMin", o."fundingMax", o.currency,
@@ -47,28 +67,30 @@ export class PostgresSearchProvider implements SearchProvider {
       LIMIT ${perPage} OFFSET ${(page - 1) * perPage}
     `;
 
-    const total = rows.length ? Number(rows[0].total_count) : 0;
-    const hits = await attachCategories(rows);
+  const total = rows.length ? Number(rows[0].total_count) : 0;
+  const hits = await attachCategories(rows);
 
-    return {
-      hits,
-      total,
-      page,
-      perPage,
-      pages: Math.max(1, Math.ceil(total / perPage)),
-    };
-  }
+  return {
+    hits,
+    total,
+    page,
+    perPage,
+    pages: Math.max(1, Math.ceil(total / perPage)),
+  };
+}, ["public-search-v1"], {
+  revalidate: PUBLIC_CACHE_SECONDS,
+  tags: [PUBLIC_CATALOG_TAG],
+});
 
-  async facets(
-    filters: OpportunityFilters,
-    categorySlugs: string[],
-  ): Promise<Map<string, number>> {
-    if (categorySlugs.length === 0) return new Map();
-    const where = await buildWhere(filters);
+const cachedFacets = unstable_cache(async (
+  filters: OpportunityFilters,
+  categorySlugs: string[],
+): Promise<Array<[string, number]>> => {
+  const where = await buildWhere(filters);
 
-    // Counts roll descendants up into their parent, so "Grants" reflects
-    // everything filed under Prototype Grants, R&D Grants and the rest.
-    const rows = await prisma.$queryRaw<{ slug: string; count: bigint }[]>`
+  // Counts roll descendants up into their parent, so "Grants" reflects
+  // everything filed under Prototype Grants, R&D Grants and the rest.
+  const rows = await prisma.$queryRaw<{ slug: string; count: bigint }[]>`
       WITH RECURSIVE tree AS (
         SELECT id AS root_id, id, slug AS root_slug
         FROM "Category"
@@ -88,9 +110,11 @@ export class PostgresSearchProvider implements SearchProvider {
       GROUP BY t.root_slug
     `;
 
-    return new Map(rows.map((r) => [r.slug, Number(r.count)]));
-  }
-}
+  return rows.map((r) => [r.slug, Number(r.count)]);
+}, ["public-search-facets-v1"], {
+  revalidate: PUBLIC_CACHE_SECONDS,
+  tags: [PUBLIC_CATALOG_TAG],
+});
 
 type RawRow = Omit<SearchHit, "categories" | "fundingMin" | "fundingMax"> & {
   fundingMin: Prisma.Decimal | null;

@@ -1,9 +1,10 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import type { DuplicateStatus, Prisma, RejectionReason } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_CATALOG_TAG } from "@/lib/cache-tags";
 import { audit } from "@/lib/audit";
 import { requireAdmin } from "@/lib/auth/admin";
 import { fingerprint } from "@/lib/ingestion";
@@ -20,6 +21,7 @@ const OPEN_REVIEW_STATUSES = [
 ] as const;
 
 function revalidateReview(opportunityId?: string) {
+  revalidateTag(PUBLIC_CATALOG_TAG);
   revalidatePath("/admin/review");
   revalidatePath("/admin/inbox");
   revalidatePath("/admin");

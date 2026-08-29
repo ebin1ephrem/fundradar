@@ -1,11 +1,13 @@
 import "server-only";
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { publiclyVisible } from "@/lib/visibility";
+import { PUBLIC_CACHE_SECONDS, PUBLIC_CATALOG_TAG } from "@/lib/cache-tags";
 import { search, type SearchHit } from "@/lib/search";
 
 /** Cached per request — metadata and the page body both need the record. */
-export const getPublishedOpportunity = cache(async (slug: string) => {
+const getCachedPublishedOpportunity = unstable_cache(async (slug: string) => {
   return prisma.opportunity.findFirst({
     where: { slug, ...publiclyVisible },
     include: {
@@ -19,7 +21,12 @@ export const getPublishedOpportunity = cache(async (slug: string) => {
       },
     },
   });
+}, ["published-opportunity-v1"], {
+  revalidate: PUBLIC_CACHE_SECONDS,
+  tags: [PUBLIC_CATALOG_TAG],
 });
+
+export const getPublishedOpportunity = cache(getCachedPublishedOpportunity);
 
 export type PublishedOpportunity = NonNullable<
   Awaited<ReturnType<typeof getPublishedOpportunity>>

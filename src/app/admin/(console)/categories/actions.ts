@@ -1,8 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_CATALOG_TAG } from "@/lib/cache-tags";
 import { audit } from "@/lib/audit";
 import { requireAdmin, requireRole } from "@/lib/auth/admin";
 import { slugify, uniqueSlug } from "@/lib/utils";
@@ -14,6 +15,7 @@ export type CategoryFormState = {
 };
 
 function revalidateCategoryViews(slug?: string) {
+  revalidateTag(PUBLIC_CATALOG_TAG);
   revalidatePath("/admin/categories");
   revalidatePath("/");
   revalidatePath("/categories");
