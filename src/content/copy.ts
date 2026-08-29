@@ -130,9 +130,9 @@ export const home = {
     ],
   },
   banner: {
-    headline: "Let us keep an eye out while you keep building.",
+    headline: "Keep building. We'll watch what opens.",
     subline:
-      "A short weekly selection of new opportunities, approaching deadlines and programmes worth a look.",
+      "Get a weekly shortlist of new calls, useful programmes and deadlines that need attention.",
     cta: "Keep me on the Radar",
   },
 } as const;
@@ -184,24 +184,24 @@ export const about = {
     eyebrow: "BUILT AROUND YOUR NEXT MOVE",
     items: [
       {
-        title: "Find what matters.",
-        body: "Explore funding, programmes and startup opportunities around what your company needs next.",
+        title: "Start with relevance.",
+        body: "Look around the need in front of your company, not through an endless general list.",
       },
       {
-        title: "Understand it quickly.",
-        body: "See the key information without spending hours working through pages of programme details.",
+        title: "Make comparison easier.",
+        body: "We surface the offer, fit, deadline and next step in a form you can scan.",
       },
       {
-        title: "Choose where to spend your time.",
-        body: "Not every opportunity deserves an application. Focus on the ones that fit what you are building.",
+        title: "Protect founder time.",
+        body: "A strong opportunity can still be wrong for your startup. It should be easy to rule out.",
       },
       {
-        title: "Act while it's open.",
-        body: "Check the deadline, eligibility and next step, then go to the official programme page to apply.",
+        title: "Keep the source close.",
+        body: "When something looks relevant, confirm the details and continue on the official programme page.",
       },
       {
-        title: "Keep moving.",
-        body: "New opportunities keep appearing. Come back when your startup is ready for its next move.",
+        title: "Stay ready for what comes next.",
+        body: "The right opportunity changes with your stage, priorities and timing.",
       },
     ],
   },
@@ -246,6 +246,18 @@ export const opportunity = {
     application: "How do I apply?",
     documents: "What should I prepare?",
   },
+  sectionPrompt: {
+    fullView:
+      "Read the complete opportunity and decide whether it deserves more of your time.",
+    eligibility:
+      "Check the complete criteria against your startup, stage and location before going further.",
+    benefits:
+      "See the full support package, including the practical value beyond the headline funding.",
+    application:
+      "View every application step in order, so you know what the process will ask of you.",
+    documents:
+      "See the preparation list before you begin, from forms and decks to supporting evidence.",
+  },
   sections: {
     overview: "What is it?",
     funding: "What could you get?",
@@ -272,7 +284,7 @@ export const opportunity = {
   verifiedTooltip: "Linked to the official programme page.",
   disclaimer: "Programme details can change. Check the official programme page before applying.",
   locked: {
-    label: "See the funding, eligibility, benefits and application details in one place.",
+    label: "Review the practical details before deciding whether this opportunity deserves your time.",
     cta: "Check if it fits",
   },
 } as const;
@@ -326,8 +338,8 @@ export const search = {
 /** Part 7 — lead capture. */
 export const leadCapture = {
   general: {
-    headline: "Let us keep an eye out while you keep building.",
-    body: "Get a short selection of new opportunities, approaching deadlines and programmes worth a look.",
+    headline: "What should we keep on your Radar?",
+    body: "Choose what matters and get a focused weekly update without doing the search again yourself.",
     prompt: "Tell us where to send the Radar:",
     bullets: [
       "New grants and funding programmes",
@@ -346,7 +358,7 @@ export const leadCapture = {
   }),
   afterViewing: {
     headline: "Want to know if this one is worth pursuing?",
-    body: "See the funding, eligibility, benefits and application details in one place.\n\nTell us where to send the Radar and we'll open the opportunity straight away. No password. No account to set up.",
+    body: "See the funding, eligibility, benefits and application details in one place.\n\nShare your details once and we'll take you straight back to the opportunity.",
     cta: "Check if it fits",
   },
   microReward: (count: number, categoryName: string) => ({
@@ -445,10 +457,10 @@ export const dashboard = {
 export const weeklySignal = {
   productName: "The Weekly Radar",
   eyebrow: "THE WEEKLY RADAR",
-  headline: "Let us keep an eye out while you keep building.",
+  headline: "Your weekly opportunity check, made lighter.",
   body: "New grants. Incubation calls. CSR funding. Accelerators. Competitions. Deadline changes.",
   body2:
-    "A short weekly selection of new opportunities, approaching deadlines and programmes worth a look.",
+    "One focused update with newly opened calls, approaching deadlines and programmes worth your attention.",
   cta: "Keep me on the Radar",
   supporting:
     "Choose the kinds of opportunities you care about. We'll sharpen the signal over time.",

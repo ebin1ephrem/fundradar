@@ -352,6 +352,7 @@ export default async function OpportunityPage({
               teaser="Read the full programme description"
               reason="view_full_details"
               cta={oppCopy.sectionCta.fullView}
+              supportingCopy={oppCopy.sectionPrompt.fullView}
             />
           ) : opportunity.fullDescription ? (
             <DetailSection id="overview" title={oppCopy.sections.overview}>
@@ -398,6 +399,7 @@ export default async function OpportunityPage({
               teaser="See the full eligibility criteria"
               reason="view_eligibility"
               cta={oppCopy.sectionCta.eligibility}
+              supportingCopy={oppCopy.sectionPrompt.eligibility}
             />
           ) : (
             <DetailSection id="eligibility" title={oppCopy.sections.eligibility}>
@@ -469,6 +471,7 @@ export default async function OpportunityPage({
               teaser="See everything the programme offers"
               reason="view_benefits"
               cta={oppCopy.sectionCta.benefits}
+              supportingCopy={oppCopy.sectionPrompt.benefits}
             />
           ) : benefits.length || opportunity.benefitsSummary ? (
             <DetailSection id="benefits" title={oppCopy.sections.benefits}>
@@ -492,6 +495,7 @@ export default async function OpportunityPage({
               teaser="See how to apply, step by step"
               reason="view_application_details"
               cta={oppCopy.sectionCta.application}
+              supportingCopy={oppCopy.sectionPrompt.application}
             />
           ) : opportunity.applicationProcess || opportunity.applicationInstructions ? (
             <DetailSection id="application-process" title={oppCopy.sections.applicationProcess}>
@@ -507,6 +511,7 @@ export default async function OpportunityPage({
               teaser="See what you need to prepare"
               reason="view_documents"
               cta={oppCopy.sectionCta.documents}
+              supportingCopy={oppCopy.sectionPrompt.documents}
             />
           ) : opportunity.requiredDocuments ? (
             <DetailSection id="required-documents" title={oppCopy.sections.documents}>

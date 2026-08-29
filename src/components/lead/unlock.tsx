@@ -114,11 +114,13 @@ export function LockedSection({
   teaser,
   reason,
   cta,
+  supportingCopy,
 }: {
   title: string;
   teaser: string;
   reason: string;
   cta: string;
+  supportingCopy: string;
 }) {
   const { open } = useLeadGate();
 
@@ -139,8 +141,7 @@ export function LockedSection({
               {teaser}
             </p>
             <p className="mt-1.5 text-[13.5px] text-muted">
-              Tell us where to send the Radar and we&apos;ll open the opportunity
-              straight away. No password. No account to set up.
+              {supportingCopy}
             </p>
           </div>
           <button

@@ -66,7 +66,7 @@ try {
   check("how-it-works section is present", home.includes("Built around your next move."));
   check("the trust section leads with the founder perspective",
     home.includes("We built FundRadar because we've been on this side of the search."));
-  check("the Weekly Radar is named", home.includes("Let us keep an eye out while you keep building."));
+  check("the Weekly Radar is named", home.includes("Keep building. We'll watch what opens."));
   check("the footer carries the brand lockup", home.includes("FundRadar by Merstra"));
   check("the footer points founders to the official source",
     home.includes("Programme details can change. Check the official programme page before applying."));
@@ -138,7 +138,7 @@ try {
   // real ones. Assert whichever state this page is actually in.
   check("apply route is either the official-source CTA or the gate",
     detail.includes("Go to official call") ||
-    detail.includes("See the funding, eligibility, benefits and application details in one place") ||
+    detail.includes("Read the complete opportunity and decide whether it deserves more of your time") ||
     detail.includes("Check if it fits"),
     "neither shown");
   check("the gate never says \"sign up\" or \"register\"",
