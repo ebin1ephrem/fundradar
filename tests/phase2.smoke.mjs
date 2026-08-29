@@ -121,17 +121,48 @@ try {
     detail.includes("Check the official programme page before applying"));
   check("unspecified fields say so rather than guessing", detail.includes("Not specified"));
 
-  const shareHref = await page
-    .getByRole("link", { name: "Share this opportunity" })
-    .getAttribute("href");
-  const sharedText = shareHref
-    ? new URL(shareHref).searchParams.get("text")
-    : null;
   const canonicalHref = await page.locator('link[rel="canonical"]').getAttribute("href");
-  check("Share continues to open WhatsApp",
-    shareHref?.startsWith("https://wa.me/") ?? false, shareHref);
-  check("WhatsApp share includes the exact opportunity URL",
-    Boolean(canonicalHref && sharedText?.includes(canonicalHref)), sharedText);
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "share", {
+      configurable: true,
+      value: async (payload) => { window.__sharedOpportunity = payload; },
+    });
+  });
+  await page.getByRole("button", { name: "Share this opportunity" }).click();
+  const shared = await page.evaluate(() => window.__sharedOpportunity);
+  check("desktop Web Share receives the opportunity title",
+    shared?.title === "Anantara DeepTech Prototype Grant");
+  check("desktop Web Share receives the canonical opportunity URL",
+    Boolean(canonicalHref && shared?.url === canonicalHref), shared?.url);
+
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "share", { configurable: true, value: undefined });
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: async (value) => { window.__copiedOpportunity = value; } },
+    });
+  });
+  await page.getByRole("button", { name: "Share this opportunity" }).click();
+  const copied = await page.evaluate(() => window.__copiedOpportunity);
+  check("desktop fallback copies the canonical opportunity URL",
+    Boolean(canonicalHref && copied === canonicalHref), copied);
+
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, "userAgent", {
+      configurable: true,
+      value: "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)",
+    });
+    window.open = (url) => { window.__mobileShareUrl = String(url); return null; };
+  });
+  await page.getByRole("button", { name: "Opportunity link copied" }).click();
+  const mobileShareUrl = await page.evaluate(() => window.__mobileShareUrl);
+  const mobileShareText = mobileShareUrl
+    ? new URL(mobileShareUrl).searchParams.get("text")
+    : null;
+  check("mobile share opens WhatsApp",
+    mobileShareUrl?.startsWith("https://wa.me/") ?? false, mobileShareUrl);
+  check("mobile WhatsApp message includes the canonical opportunity URL",
+    Boolean(canonicalHref && mobileShareText?.includes(canonicalHref)), mobileShareText);
 
   // Category pages -------------------------------------------------------
   await page.goto(`${BASE}/categories`, { waitUntil: "domcontentloaded" });

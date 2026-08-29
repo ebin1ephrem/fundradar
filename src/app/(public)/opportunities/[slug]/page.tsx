@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowUpRight, Check, ExternalLink, MapPin, Share2 } from "lucide-react";
+import { ArrowUpRight, Check, ExternalLink, MapPin } from "lucide-react";
 import {
   getPublishedOpportunity,
   similarOpportunities,
@@ -12,6 +12,7 @@ import { BENEFIT_FIELDS, FUNDING_TYPE_LABEL, GEOGRAPHY_SCOPE_LABEL } from "@/lib
 import { DetailSection, FactRow } from "@/components/public/detail-section";
 import { ProviderText } from "@/components/public/prose";
 import { OpportunityCard } from "@/components/public/opportunity-card";
+import { ShareButton } from "@/components/public/share-button";
 import {
   ApplyLink,
   LockedSection,
@@ -323,17 +324,12 @@ export default async function OpportunityPage({
                       title={opportunity.title}
                       saved={Boolean(saved)}
                     />
-                    <a
-                      href={`https://wa.me/?text=${encodeURIComponent(
-                        `${opportunity.title} — ${opportunity.providerName}\n\n${canonicalUrl}`,
-                      )}`}
-                      target="_blank"
-                      rel="noreferrer noopener"
-                      aria-label="Share this opportunity"
-                      className="grid size-8 place-items-center self-center rounded-[6px] border border-line text-faint transition-colors duration-200 hover:border-line-strong hover:text-ink"
-                    >
-                      <Share2 className="size-4" strokeWidth={1.6} />
-                    </a>
+                    <ShareButton
+                      title={opportunity.title}
+                      text={`${opportunity.title} — ${opportunity.providerName}`}
+                      canonicalUrl={canonicalUrl}
+                      canonicalPath={canonicalPath}
+                    />
                   </div>
                 </div>
 
