@@ -36,7 +36,7 @@ export const nav = {
     { href: "/categories", label: "Categories" },
     { href: "/about", label: "About" },
   ],
-  primaryCta: "See what's open",
+  primaryCta: "See what's on the Radar",
   dashboardCta: "My dashboard",
 } as const;
 
@@ -49,7 +49,7 @@ export const home = {
     subline:
       "Grants, funding programmes, incubators, accelerators, corporate opportunities, competitions and more — curated in one place for founders who would rather spend their time building.",
     supporting: "Opportunities worth knowing about.",
-    primaryCta: "See what's open",
+    primaryCta: "See what's on the Radar",
     secondaryCta: "Get the Weekly Radar",
   },
   search: {
@@ -60,24 +60,25 @@ export const home = {
     eyebrow: "OPEN NOW",
     headline: "What's on the Radar?",
     subline: "Explore opportunities open now across funding, programmes, partnerships and startup support.",
-    cta: "See all opportunities",
+    cta: "See what's open",
   },
   closing: {
     eyebrow: "CLOSING SOON",
     headline: "Worth checking before they close.",
     subline: "Opportunities with approaching deadlines, so you can decide what deserves your time.",
-    cta: "See closing soon",
+    cta: "See what needs attention",
   },
   categories: {
     eyebrow: "EXPLORE BY CATEGORY",
     headline: "What could help you move forward?",
     subline: "Explore opportunities across funding, programmes, partnerships and startup support.",
-    cta: "View all categories",
+    cta: "Explore categories",
   },
   recent: {
     eyebrow: "RECENTLY ADDED",
     headline: "New on the Radar",
     subline: "Recently added opportunities that may be worth a look.",
+    cta: "See what's new",
   },
   howItWorks: {
     eyebrow: "LESS SEARCHING. BETTER DECISIONS.",
@@ -132,7 +133,7 @@ export const home = {
     headline: "Let us keep an eye out while you keep building.",
     subline:
       "A short weekly selection of new opportunities, approaching deadlines and programmes worth a look.",
-    cta: "Get the Weekly Radar",
+    cta: "Keep me on the Radar",
   },
 } as const;
 
@@ -227,15 +228,23 @@ export const about = {
 /** Part 4 — opportunity pages. */
 export const opportunity = {
   cta: {
-    apply: "Apply on official programme page",
-    save: "Put this on your Radar",
-    saved: "On your Radar",
-    remind: "Get deadline reminder",
+    apply: "Go to official call",
+    source: "View official programme",
+    save: "Keep this on my Radar",
+    saved: "On my Radar",
+    remind: "Remind me before it closes",
     similar: "Find more like this",
     share: "Share",
     report: "Report an error",
-    details: "See details",
-    fullDetails: "See full details",
+    details: "Take a closer look",
+    fullDetails: "Check if it fits",
+  },
+  sectionCta: {
+    fullView: "Check if it fits",
+    eligibility: "Can I apply?",
+    benefits: "What does it include?",
+    application: "How do I apply?",
+    documents: "What should I prepare?",
   },
   sections: {
     overview: "What is it?",
@@ -263,8 +272,8 @@ export const opportunity = {
   verifiedTooltip: "Linked to the official programme page.",
   disclaimer: "Programme details can change. Check the official programme page before applying.",
   locked: {
-    label: "See full eligibility, application details and benefits.",
-    cta: "See full details",
+    label: "See the funding, eligibility, benefits and application details in one place.",
+    cta: "Check if it fits",
   },
 } as const;
 
@@ -305,12 +314,12 @@ export const search = {
     headline: (q: string) => `No signal for "${q}" — yet.`,
     body: "We didn't find matching opportunities right now. Try broader terms, browse by category, or get on the radar and we'll notify you when something relevant appears.",
     browseCta: "Browse categories",
-    radarCta: "Get on the radar",
+    radarCta: "Keep me on the Radar",
   },
   emptyCategory: {
     headline: (name: string) => `No active opportunities in ${name} right now.`,
     body: "New opportunities keep appearing. Get on the radar and we'll let you know when something opens in this space.",
-    cta: "Get notified when something opens",
+    cta: "Let me know when something opens",
   },
 } as const;
 
@@ -319,7 +328,7 @@ export const leadCapture = {
   general: {
     headline: "Let us keep an eye out while you keep building.",
     body: "Get a short selection of new opportunities, approaching deadlines and programmes worth a look.",
-    prompt: "Tell us where to send the signal:",
+    prompt: "Tell us where to send the Radar:",
     bullets: [
       "New grants and funding programmes",
       "Incubation and acceleration calls",
@@ -328,17 +337,17 @@ export const leadCapture = {
       "Deadline changes and extensions",
     ],
     footnote: "One useful update each week.",
-    cta: "Get the Weekly Radar",
+    cta: "Keep me on the Radar",
   },
   contextual: (categoryName: string) => ({
     headline: `Looking for ${categoryName} opportunities?`,
     body: `We'll send you new ${categoryName} grants, programmes and funding calls that may be worth your attention.`,
-    cta: "Keep me on the radar",
+    cta: "Keep me on the Radar",
   }),
   afterViewing: {
-    headline: "Want more opportunities like this?",
-    body: "Tell us where to send them, then get back to building.",
-    cta: "Send me similar opportunities",
+    headline: "Want to know if this one is worth pursuing?",
+    body: "See the funding, eligibility, benefits and application details in one place.\n\nTell us where to send the Radar and we'll open the opportunity straight away. No password. No account to set up.",
+    cta: "Check if it fits",
   },
   microReward: (count: number, categoryName: string) => ({
     headline: `We found ${count} active ${categoryName} opportunities.`,
@@ -348,7 +357,7 @@ export const leadCapture = {
   deadline: (days: number) => ({
     headline: "Don't miss this deadline.",
     body: `This opportunity closes in ${days} ${days === 1 ? "day" : "days"}. Want a reminder — plus similar opportunities as they open?`,
-    cta: "Remind me",
+    cta: "Remind me before it closes",
   }),
   fields: {
     name: "Name",
@@ -376,7 +385,7 @@ export const profiling = {
   industry: "What industry is your startup in?",
   stage: "What stage are you at?",
   location: "Where is your startup based?",
-  cta: "Update my radar",
+  cta: "Update my Radar",
   matching: {
     intro: "To find the right opportunities, we need a few more details.",
     cta: "Find matching opportunities",
@@ -440,7 +449,7 @@ export const weeklySignal = {
   body: "New grants. Incubation calls. CSR funding. Accelerators. Competitions. Deadline changes.",
   body2:
     "A short weekly selection of new opportunities, approaching deadlines and programmes worth a look.",
-  cta: "Get the Weekly Radar",
+  cta: "Keep me on the Radar",
   supporting:
     "Choose the kinds of opportunities you care about. We'll sharpen the signal over time.",
   preferences: {
@@ -619,21 +628,21 @@ export const admin = {
 
 /** Part 11 — the substitution table, kept so nothing regresses. */
 export const cta = {
-  register: "Get on the radar",
+  register: "Keep me on the Radar",
   submit: "Send me the signal",
-  subscribe: "Get the Weekly Radar",
+  subscribe: "Keep me on the Radar",
   signUp: "Get the signal",
-  explore: "See what's open",
-  learnMore: "See details",
-  viewOfficial: "View official call",
+  explore: "See what's on the Radar",
+  learnMore: "Take a closer look",
+  viewOfficial: "View official programme",
   recommended: "Worth a Look",
   urgent: "Closing Soon",
   createAccount: "Get started",
   logIn: "Continue",
-  apply: "Apply on official programme page",
-  viewMore: "See all",
+  apply: "Go to official call",
+  viewMore: "Keep exploring",
   download: "Get the list",
-  notify: "Keep me on the radar",
+  notify: "Keep me on the Radar",
 } as const;
 
 export function leadScoreLabel(score: number): string {

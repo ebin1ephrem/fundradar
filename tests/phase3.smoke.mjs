@@ -35,15 +35,15 @@ try {
   check("no popup on a first opportunity view",
     !(await page.evaluate(() => Boolean(document.querySelector("dialog[open]")))));
   check("the official application link is withheld until identified",
-    !(await page.$('a:has-text("Apply at official source")')));
+    !(await page.$('a:has-text("Go to official call")')));
 
   // --- Clicking a locked action opens the popup -------------------------
-  await page.getByRole("button", { name: "See full details" }).first().click();
+  await page.getByRole("button", { name: "Check if it fits" }).first().click();
   await page.waitForSelector("dialog[open]", { timeout: 10000 });
   const modal = await page.textContent("dialog");
   check("clicking a locked section opens the capture popup", modal.length > 0);
   check("popup leads with the reward, not with signing up",
-    /Want more opportunities like this\?/.test(modal) &&
+    /Want to know if this one is worth pursuing\?/.test(modal) &&
     !/sign up|create an account|register/i.test(modal));
   check("popup asks only for the four fields",
     (await page.$$("dialog input:not([type=hidden])")).length === 4);
@@ -71,7 +71,7 @@ try {
   await page.fill("#lead-email", EMAIL);
   await page.fill("#lead-whatsapp", "+91 98765 43210");
   await page.fill("#lead-startup", `Acme Robotics ${RUN}`);
-  await page.getByRole("button", { name: /Send me|Get my/i }).click();
+  await page.getByRole("button", { name: "Check if it fits" }).click();
   await page.waitForFunction(
     () => document.body.innerText.includes("You're on the radar") ||
           document.body.innerText.includes("You’re in"),
@@ -93,7 +93,7 @@ try {
   check("the section they wanted unlocks in place, on the same page",
     unlockedInPlace && page.url().includes("helix-biotech"), page.url());
   check("the official application link appears once identified",
-    Boolean(await page.$('a:has-text("Apply at official source")')));
+    Boolean(await page.$('a:has-text("Go to official call")')));
 
   // --- Remembered -------------------------------------------------------
   await go("/opportunities/kaveri-state-seed-fund");
@@ -104,7 +104,7 @@ try {
     !(await page.evaluate(() => Boolean(document.querySelector("dialog[open]")))));
 
   // --- Saving -----------------------------------------------------------
-  await page.getByRole("button", { name: /^Save/ }).first().click();
+  await page.getByRole("button", { name: /Put .* on your Radar/ }).first().click();
   await page.waitForTimeout(1500);
   await go("/dashboard/saved");
   check("saved opportunities reach the dashboard",
@@ -119,7 +119,7 @@ try {
   // --- Dashboard --------------------------------------------------------
   await go("/dashboard");
   const dash = await body();
-  check("dashboard shows recommendations", dash.includes("Your signal"));
+  check("dashboard shows recommendations", dash.includes("Worth a Look"));
   check("recommendations explain what they are based on",
     /Based on your interest in|Newest first while we learn/.test(dash));
   check("dashboard shows the categories it learned", dash.includes("Your categories"));
@@ -141,7 +141,7 @@ try {
   // --- Alerts and consent ----------------------------------------------
   await go("/dashboard/alerts");
   const alerts = await body();
-  check("alert preferences are editable", alerts.includes("Weekly funding digest"));
+  check("alert preferences are editable", alerts.includes("The Weekly Radar"));
   check("email and WhatsApp consent are separate controls",
     alerts.includes("Email me funding opportunities") &&
     alerts.includes("Message me on WhatsApp"));

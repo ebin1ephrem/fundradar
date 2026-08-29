@@ -18,14 +18,14 @@ try {
   await page.goto(BASE, { waitUntil: "domcontentloaded" });
   const home = await body();
   check("homepage renders hero",
-    home.includes("Signal, not noise.") &&
-    home.includes("Find the startup funding that actually matters to you."));
+    home.includes("Find what could move") &&
+    home.includes("your startup forward."));
   check("homepage shows the four homepage categories",
     ["Grants", "Seed Funds", "Incubation Programs", "Acceleration Programs"].every((c) => home.includes(c)));
   check("category counts come from the database", /\d+ opportunities/.test(home));
-  check("homepage lists closing-soon programmes", home.includes("Closing soon"));
-  check("homepage explains the review guarantee",
-    home.includes("Automation helps us look. People decide what gets published."));
+  check("homepage lists closing-soon programmes", home.includes("Closing Soon"));
+  check("homepage explains the founder perspective",
+    home.includes("We built FundRadar because we've been on this side of the search."));
 
   // Search ---------------------------------------------------------------
   await page.fill("#q", "biotec");
@@ -107,9 +107,9 @@ try {
   // An anonymous visitor sees the whole page structure and everything that is
   // always public. The deeper sections are covered by the phase 3 suite.
   check("detail page renders every section heading",
-    ["Overview", "Funding", "Eligibility", "Who can apply", "Benefits",
-     "Application process", "Required documents",
-     "Important dates", "Official source"].every((s) => detail.includes(s)));
+    ["What is it?", "What could you get?", "Who is it for?", "Who can apply?",
+     "What does the programme offer?", "How to apply", "What should you prepare?",
+     "Important dates", "Official programme page"].every((s) => detail.includes(s)));
   check("basic facts stay public with no details given",
     detail.includes("Anantara Innovation Foundation") &&
     detail.includes("Equity-free") && detail.includes("Prototype"));
@@ -118,7 +118,7 @@ try {
   check("detail page links to the official source",
     Boolean(await page.$('a[href="https://example.invalid/programmes/anantara-deeptech-prototype-grant"]')));
   check("the official source is never gated",
-    detail.includes("always verify with the official programme page before applying"));
+    detail.includes("Check the official programme page before applying"));
   check("unspecified fields say so rather than guessing", detail.includes("Not specified"));
 
   // Category pages -------------------------------------------------------

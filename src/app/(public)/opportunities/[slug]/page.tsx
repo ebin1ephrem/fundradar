@@ -351,6 +351,7 @@ export default async function OpportunityPage({
               title={oppCopy.sections.overview}
               teaser="Read the full programme description"
               reason="view_full_details"
+              cta={oppCopy.sectionCta.fullView}
             />
           ) : opportunity.fullDescription ? (
             <DetailSection id="overview" title={oppCopy.sections.overview}>
@@ -396,6 +397,7 @@ export default async function OpportunityPage({
               title={oppCopy.sections.eligibility}
               teaser="See the full eligibility criteria"
               reason="view_eligibility"
+              cta={oppCopy.sectionCta.eligibility}
             />
           ) : (
             <DetailSection id="eligibility" title={oppCopy.sections.eligibility}>
@@ -466,6 +468,7 @@ export default async function OpportunityPage({
               title={oppCopy.sections.benefits}
               teaser="See everything the programme offers"
               reason="view_benefits"
+              cta={oppCopy.sectionCta.benefits}
             />
           ) : benefits.length || opportunity.benefitsSummary ? (
             <DetailSection id="benefits" title={oppCopy.sections.benefits}>
@@ -488,6 +491,7 @@ export default async function OpportunityPage({
               title={oppCopy.sections.applicationProcess}
               teaser="See how to apply, step by step"
               reason="view_application_details"
+              cta={oppCopy.sectionCta.application}
             />
           ) : opportunity.applicationProcess || opportunity.applicationInstructions ? (
             <DetailSection id="application-process" title={oppCopy.sections.applicationProcess}>
@@ -502,6 +506,7 @@ export default async function OpportunityPage({
               title={oppCopy.sections.documents}
               teaser="See what you need to prepare"
               reason="view_documents"
+              cta={oppCopy.sectionCta.documents}
             />
           ) : opportunity.requiredDocuments ? (
             <DetailSection id="required-documents" title={oppCopy.sections.documents}>
@@ -557,7 +562,7 @@ export default async function OpportunityPage({
                 className="inline-flex items-start gap-2 text-[14.5px] break-all underline underline-offset-2 hover:text-ink"
               >
                 <ExternalLink className="mt-1 size-3.5 shrink-0 text-faint" strokeWidth={1.7} />
-                {opportunity.officialSourceUrl}
+                {oppCopy.cta.source}
               </a>
               <dl className="mt-4 border-t border-line pt-1">
                 <FactRow label="Last verified" value={formatDate(opportunity.lastVerifiedAt)} />

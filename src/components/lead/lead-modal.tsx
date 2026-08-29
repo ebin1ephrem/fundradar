@@ -119,7 +119,7 @@ export function LeadModal() {
             >
               {copy.headline}
             </h2>
-            <p className="mt-3 text-[14.5px] leading-relaxed text-muted">
+            <p className="mt-3 whitespace-pre-line text-[14.5px] leading-relaxed text-muted">
               {copy.body}
             </p>
 

@@ -258,7 +258,7 @@ export default async function HomePage() {
               title={home.recent.headline}
               description={home.recent.subline}
               href="/opportunities?sort=newest"
-              linkLabel={home.open.cta}
+              linkLabel={home.recent.cta}
             />
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {recent.hits.map((hit) => (

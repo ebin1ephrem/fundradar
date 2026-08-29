@@ -226,6 +226,7 @@ export default async function CategoryPage({
                 title={home.closing.headline}
                 description={home.closing.subline}
                 href={`/opportunities?c=${category.slug}&closing=30`}
+                linkLabel={home.closing.cta}
               >
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {closingSoon.hits.map((hit) => (
@@ -239,6 +240,7 @@ export default async function CategoryPage({
               title={home.recent.headline}
               description={`Recently added opportunities in ${category.name}.`}
               href={`/opportunities?c=${category.slug}`}
+              linkLabel={home.recent.cta}
             >
               <OpportunityGrid hits={latest.hits} savedIds={savedIds} />
             </Section>
@@ -248,6 +250,7 @@ export default async function CategoryPage({
                 title="Largest funding"
                 description="The biggest amounts on offer in this category."
                 href={`/opportunities?c=${category.slug}&sort=largest`}
+                linkLabel="See the funding"
               >
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {featured.hits.map((hit) => (
@@ -307,11 +310,13 @@ function Section({
   title,
   description,
   href,
+  linkLabel,
   children,
 }: {
   title: string;
   description: string;
   href: string;
+  linkLabel: string;
   children: React.ReactNode;
 }) {
   return (
@@ -322,7 +327,7 @@ function Section({
           <p className="mt-1.5 text-[14px] text-muted">{description}</p>
         </div>
         <Link href={href} className="text-[14px] text-muted underline underline-offset-2 hover:text-ink">
-          View all
+          {linkLabel}
         </Link>
       </div>
       {children}

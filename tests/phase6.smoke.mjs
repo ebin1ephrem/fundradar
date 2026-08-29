@@ -59,17 +59,17 @@ try {
   // --- Homepage copy ----------------------------------------------------
   await go("/");
   const home = await body();
-  check("hero leads with the tagline", home.includes("Signal, not noise."));
-  check("hero subline is the spec's", home.includes("collected from across the ecosystem"));
+  check("hero leads with the new promise", home.includes("Find what could move"));
+  check("hero subline is the spec's", home.includes("curated in one place for founders"));
   check("the eyebrow lists what is covered",
-    home.includes("GRANTS · FUNDING · PROGRAMS · OPPORTUNITIES"));
-  check("how-it-works section is present", home.includes("We find it. We review it. You decide."));
-  check("the trust section leads with the human rule",
-    home.includes("Automation helps us look. People decide what gets published."));
-  check("the Weekly Signal is named", home.includes("The signal, delivered once a week."));
+    home.includes("OPPORTUNITIES FOR FOUNDERS"));
+  check("how-it-works section is present", home.includes("Built around your next move."));
+  check("the trust section leads with the founder perspective",
+    home.includes("We built FundRadar because we've been on this side of the search."));
+  check("the Weekly Radar is named", home.includes("Let us keep an eye out while you keep building."));
   check("the footer carries the brand lockup", home.includes("FundRadar by Merstra"));
-  check("the footer states the no-fabrication rule",
-    home.includes("We don't fabricate information we can't verify."));
+  check("the footer points founders to the official source",
+    home.includes("Programme details can change. Check the official programme page before applying."));
   check("homepage uses no banned phrases", bannedIn(home).length === 0, bannedIn(home).join(", "));
 
   // --- Homepage SEO -----------------------------------------------------
@@ -91,20 +91,20 @@ try {
 
   // --- Navigation -------------------------------------------------------
   check("nav uses the spec's labels",
-    home.includes("Open opportunities") && home.includes("Closing soon") &&
+    home.includes("Open opportunities") && home.includes("Closing Soon") &&
     home.includes("Categories") && home.includes("About"));
   check("the primary CTA is not \"Sign up\"",
-    home.includes("See what's open") && !home.includes("Sign up"));
+    home.includes("See what's on the Radar") && !home.includes("Sign up"));
 
   // --- About page -------------------------------------------------------
   await go("/about");
   const about = await body();
   check("about page renders",
     about.includes("FundRadar exists because good opportunities are too easy to miss."));
-  check("about page credits Merstra", about.includes("A MERSTRA INITIATIVE"));
+  check("about page credits Merstra", about.includes("FUNDRADAR BY MERSTRA"));
   check("about page states what we are not",
     about.includes("We're not trying to make every opportunity look good."));
-  check("about page states the promise", about.includes("THE FUNDRADAR PROMISE"));
+  check("about page states the promise", about.includes("BUILT AROUND YOUR NEXT MOVE"));
   check("about title is the spec's",
     (await page.title()).includes("Signal, Not Noise in Startup Funding"), await page.title());
   check("about page uses no banned phrases", bannedIn(about).length === 0, bannedIn(about).join(", "));
@@ -124,7 +124,7 @@ try {
   const empty = await body();
   check("an empty search says \"no signal\"", empty.includes("No signal for"));
   check("an empty search offers the categories route", empty.includes("Browse categories"));
-  check("an empty search offers the radar", empty.includes("Get on the radar"));
+  check("an empty search offers the radar", empty.includes("Keep me on the Radar"));
 
   // --- Opportunity page -------------------------------------------------
   await go("/opportunities");
@@ -137,15 +137,15 @@ try {
   // An anonymous visitor sees the gated versions of both; a lead sees the
   // real ones. Assert whichever state this page is actually in.
   check("apply route is either the official-source CTA or the gate",
-    detail.includes("Apply at official source") ||
-    detail.includes("See full eligibility, application details and benefits") ||
-    detail.includes("See full details"),
+    detail.includes("Go to official call") ||
+    detail.includes("See the funding, eligibility, benefits and application details in one place") ||
+    detail.includes("Check if it fits"),
     "neither shown");
   check("the gate never says \"sign up\" or \"register\"",
     !/\bsign up\b|\bregister\b|create account/i.test(detail));
-  check("deadline reminder CTA is the spec's", detail.includes("Get deadline reminder"));
+  check("deadline reminder CTA is the spec's", detail.includes("Remind me before it closes"));
   check("the data disclaimer is shown",
-    detail.includes("always verify with the official programme page before applying"));
+    detail.includes("Check the official programme page before applying"));
   check("report an error is offered", detail.includes("Report an error"));
   check("confidence is never shown publicly",
     !detail.includes("confidence") && !detail.includes("Confidence"));

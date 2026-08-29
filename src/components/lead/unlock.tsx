@@ -113,10 +113,12 @@ export function LockedSection({
   title,
   teaser,
   reason,
+  cta,
 }: {
   title: string;
   teaser: string;
   reason: string;
+  cta: string;
 }) {
   const { open } = useLeadGate();
 
@@ -137,8 +139,8 @@ export function LockedSection({
               {teaser}
             </p>
             <p className="mt-1.5 text-[13.5px] text-muted">
-              Tell us where to send the signal and this opens straight away —
-              no password, no account to set up.
+              Tell us where to send the Radar and we&apos;ll open the opportunity
+              straight away. No password. No account to set up.
             </p>
           </div>
           <button
@@ -149,7 +151,7 @@ export function LockedSection({
               track({ type: "unlock_requested" });
             }}
           >
-            {oppCopy.locked.cta}
+            {cta}
           </button>
         </div>
       </div>

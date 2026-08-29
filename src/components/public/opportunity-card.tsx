@@ -4,6 +4,7 @@ import type { SearchHit } from "@/lib/search";
 import { cn, daysUntil, formatDate, fundingRangeLabel } from "@/lib/utils";
 import { CLOSING_SOON_DAYS, lifecycleStatus } from "@/lib/opportunity-status";
 import { SaveButton } from "@/components/lead/unlock";
+import { opportunity as oppCopy } from "@/content/copy";
 
 const NEW_FOR_DAYS = 14;
 
@@ -110,7 +111,7 @@ export function OpportunityCard({
       </div>
 
       <span className="mt-4 inline-flex items-center gap-1 text-[13.5px] font-medium text-ink">
-        View details
+        {oppCopy.cta.details}
         <ArrowUpRight
           className="size-3.5 transition-transform duration-200 group-hover:translate-x-[2px] group-hover:-translate-y-[2px]"
           strokeWidth={1.8}
