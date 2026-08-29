@@ -121,6 +121,18 @@ try {
     detail.includes("Check the official programme page before applying"));
   check("unspecified fields say so rather than guessing", detail.includes("Not specified"));
 
+  const shareHref = await page
+    .getByRole("link", { name: "Share this opportunity" })
+    .getAttribute("href");
+  const sharedText = shareHref
+    ? new URL(shareHref).searchParams.get("text")
+    : null;
+  const canonicalHref = await page.locator('link[rel="canonical"]').getAttribute("href");
+  check("Share continues to open WhatsApp",
+    shareHref?.startsWith("https://wa.me/") ?? false, shareHref);
+  check("WhatsApp share includes the exact opportunity URL",
+    Boolean(canonicalHref && sharedText?.includes(canonicalHref)), sharedText);
+
   // Category pages -------------------------------------------------------
   await page.goto(`${BASE}/categories`, { waitUntil: "domcontentloaded" });
   const cats = await body();

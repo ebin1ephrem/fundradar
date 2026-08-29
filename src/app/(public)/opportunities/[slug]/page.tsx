@@ -89,6 +89,9 @@ export default async function OpportunityPage({
   const opportunity = await getPublishedOpportunity(slug);
   if (!opportunity) notFound();
 
+  const canonicalPath = `/opportunities/${opportunity.slug}`;
+  const canonicalUrl = new URL(canonicalPath, SITE).toString();
+
   const { lead } = await getViewer();
   const gate = await resolveGate(Boolean(lead));
   const similar = gate.isLocked("relatedOpportunities")
@@ -322,7 +325,7 @@ export default async function OpportunityPage({
                     />
                     <a
                       href={`https://wa.me/?text=${encodeURIComponent(
-                        `${opportunity.title} — ${opportunity.providerName}`,
+                        `${opportunity.title} — ${opportunity.providerName}\n\n${canonicalUrl}`,
                       )}`}
                       target="_blank"
                       rel="noreferrer noopener"
