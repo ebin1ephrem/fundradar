@@ -83,16 +83,19 @@ try {
   await pick("Prototype");
   check("picker holds selections across dimensions",
     (await page.textContent("body")).includes("3 selected"));
-  await page.getByRole("button", { name: "Save & publish" }).click();
+  await page.getByRole("button", { name: "Publish publicly" }).first().click();
   // The saved marker, not just the shape of the path: /manual, /new and
   // /import are all static segments that a bare id pattern also matches.
   await page.waitForURL(/\/admin\/opportunities\/[a-z0-9]+\?saved=/, { timeout: 25000 })
     .catch(() => {});
   const detail = await page.textContent("body");
-  if (!detail.includes("Published")) {
-    console.log("DEBUG create:", detail.replace(/\s+/g, " ").slice(0, 500));
-  }
-  check("opportunity created and published", detail.includes("Published"), page.url());
+  // The page renders a metadata row labelled "Published", so match the status
+  // badge instead — otherwise this passes on a record that is still a draft.
+  const badge = await page
+    .$eval('[data-workflow-status]', (el) => el.getAttribute("data-workflow-status"))
+    .catch(() => null);
+  check("opportunity created and published", badge === "PUBLISHED",
+    `${badge ?? "no badge"} · ${page.url()}`);
   check("multi-dimension categories held", detail.includes("3 selected") || detail.includes("selected"));
 
   // 8. Publication gate blocks an incomplete record
@@ -103,7 +106,7 @@ try {
   await page.fill("#officialSourceUrl", `https://example-agency.gov.in/programmes/incomplete-${RUN}`);
   await page.fill("#applicationUrl", "https://example-agency.gov.in/apply/incomplete");
   await page.check("input[name=isRollingDeadline]");
-  await page.getByRole("button", { name: "Save & publish" }).click();
+  await page.getByRole("button", { name: "Publish publicly" }).first().click();
   await page.waitForFunction(
     () => document.body.innerText.includes("Cannot publish"),
     null,
@@ -137,7 +140,8 @@ try {
     waitUntil: "networkidle",
   });
   check("test records are archived, not left published",
-    (await page.textContent("body")).includes("No opportunities match this view"));
+    /No opportunities match this (view|search)|No published opportunities/.test(
+      await page.textContent("body")));
 
   // 11. Sign out clears access
   await page.goto(`${BASE}/admin`, { waitUntil: "networkidle" });

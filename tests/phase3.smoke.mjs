@@ -71,7 +71,9 @@ try {
   await page.fill("#lead-email", EMAIL);
   await page.fill("#lead-whatsapp", "+91 98765 43210");
   await page.fill("#lead-startup", `Acme Robotics ${RUN}`);
-  await page.getByRole("button", { name: "Check if it fits" }).click();
+  // The gate button on the page and the modal's submit share a label, so scope
+  // the click to the dialog — the page button is behind a modal and inert.
+  await page.locator('dialog button[type="submit"]').first().click();
   await page.waitForFunction(
     () => document.body.innerText.includes("You're on the radar") ||
           document.body.innerText.includes("You’re in"),

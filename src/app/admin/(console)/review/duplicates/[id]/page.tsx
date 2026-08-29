@@ -98,7 +98,7 @@ export default async function DuplicateReviewPage({
       <PageHeader
         title={`${Math.round(candidate.score * 100)}% possible duplicate`}
         breadcrumbs={[
-          { label: "Review queue", href: "/admin/review?tab=duplicates" },
+          { label: "Review queue", href: "/admin/review" },
           { label: "Compare" },
         ]}
         description={

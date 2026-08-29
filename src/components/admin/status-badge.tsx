@@ -1,5 +1,6 @@
 import type { LifecycleStatus, WorkflowStatus } from "@prisma/client";
 import { cn } from "@/lib/utils";
+import { ADMIN_STATUS_LABEL } from "@/lib/admin/status-view";
 import { LIFECYCLE_LABEL, WORKFLOW_LABEL } from "@/lib/opportunity-status";
 
 const WORKFLOW_TONE: Record<WorkflowStatus, string> = {
@@ -17,8 +18,10 @@ const WORKFLOW_TONE: Record<WorkflowStatus, string> = {
 
 export function WorkflowBadge({ status }: { status: WorkflowStatus }) {
   return (
-    <span className={cn("pill", WORKFLOW_TONE[status])}>
-      {WORKFLOW_LABEL[status] ?? status}
+    // The raw status is exposed as a data attribute so tests can assert on the
+    // real state rather than on label text that happens to appear elsewhere.
+    <span data-workflow-status={status} className={cn("pill", WORKFLOW_TONE[status])}>
+      {ADMIN_STATUS_LABEL[status] ?? WORKFLOW_LABEL[status] ?? status}
     </span>
   );
 }

@@ -13,6 +13,7 @@ import {
   type OpportunityInputType,
 } from "@/lib/validation/opportunity";
 import { blockingFailures, publishRequirements } from "@/lib/publishing";
+import { TO_REVIEW_STATUSES } from "@/lib/admin/status-view";
 import { diffFields, recordVersion, snapshotOf } from "@/lib/versioning";
 
 export type OpportunityFormState = {
@@ -171,6 +172,17 @@ export async function saveOpportunityAction(
   await syncCategories(saved.id, input.categoryIds, input.primaryCategoryId);
 
   if (intent === "publish") {
+    // Review accepts or rejects; it never publishes. The review screen hides
+    // the control, and this refuses the request even if one is crafted by
+    // hand, so a record cannot skip the draft step.
+    if (existing && TO_REVIEW_STATUSES.includes(existing.workflowStatus)) {
+      revalidateOpportunityViews(saved.slug);
+      return {
+        error:
+          "This record is still in review. Save it as a draft first, then publish it from the draft page.",
+      };
+    }
+
     const result = await publishOpportunity(saved.id, admin.id);
     if (!result.ok) {
       revalidateOpportunityViews(saved.slug);

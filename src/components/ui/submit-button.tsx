@@ -11,6 +11,7 @@ export function SubmitButton({
   variant = "primary",
   name,
   value,
+  onClick,
 }: {
   children: ReactNode;
   pendingLabel?: string;
@@ -18,6 +19,7 @@ export function SubmitButton({
   variant?: "primary" | "accent" | "secondary" | "ghost";
   name?: string;
   value?: string;
+  onClick?: () => void;
 }) {
   const { pending } = useFormStatus();
   return (
@@ -25,6 +27,7 @@ export function SubmitButton({
       type="submit"
       name={name}
       value={value}
+      onClick={onClick}
       disabled={pending}
       className={cn("btn", `btn-${variant}`, className)}
     >

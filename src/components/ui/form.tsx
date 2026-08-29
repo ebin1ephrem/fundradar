@@ -63,14 +63,17 @@ export function FormNotice({ message }: { message?: string | null }) {
 export function Fieldset({
   title,
   description,
+  id,
   children,
 }: {
   title: string;
   description?: string;
+  /** Anchor target, so a "missing field" link can scroll straight here. */
+  id?: string;
   children: ReactNode;
 }) {
   return (
-    <section className="border-t border-line pt-7">
+    <section id={id} className="scroll-mt-6 border-t border-line pt-7">
       <div className="mb-5">
         <h2 className="text-[17px] font-medium tracking-[-0.02em]">{title}</h2>
         {description ? <p className="hint mt-1">{description}</p> : null}

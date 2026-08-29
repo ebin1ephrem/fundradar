@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import type { OpportunityFormValues } from "@/lib/admin/opportunity-form-values";
 import { Field, Fieldset, FormError, Row } from "@/components/ui/form";
 import { SubmitButton } from "@/components/ui/submit-button";
+import { admin as adminCopy } from "@/content/copy";
 import {
   CategoryPicker,
   type PickerCategory,
@@ -26,6 +27,7 @@ export function OpportunityForm({
   categories,
   selectedCategoryIds,
   primaryCategoryId,
+  allowPublish = true,
 }: {
   action: (
     state: OpportunityFormState,
@@ -35,7 +37,23 @@ export function OpportunityForm({
   categories: PickerCategory[];
   selectedCategoryIds: string[];
   primaryCategoryId: string | null;
+  /** Review embeds this form to edit an incoming record; publishing belongs to
+   *  the draft page, so the review screen turns it off. */
+  allowPublish?: boolean;
 }) {
+  /**
+   * Which button was pressed.
+   *
+   * A submit button's own name/value does not reach the server action through
+   * useActionState, so relying on it silently published nothing. The value is
+   * written straight into this hidden input on click instead, which happens
+   * before the form is serialised.
+   */
+  const intentRef = useRef<HTMLInputElement>(null);
+  const setIntent = (value: "draft" | "publish") => {
+    if (intentRef.current) intentRef.current.value = value;
+  };
+
   const [state, formAction] = useActionState<OpportunityFormState, FormData>(
     action,
     {},
@@ -172,6 +190,7 @@ export function OpportunityForm({
       </div>
 
       <Fieldset
+        id="categories"
         title="Categories"
         description="Multi-select across every dimension. One opportunity can sit in several at once."
       >
@@ -268,6 +287,8 @@ export function OpportunityForm({
             label="Application deadline"
             htmlFor="applicationDeadline"
             error={err.applicationDeadline}
+            required
+            hint="Required to publish, unless the programme is marked rolling."
           >
             <input
               id="applicationDeadline"
@@ -331,7 +352,8 @@ export function OpportunityForm({
         title="Eligibility"
         description="Record only what the provider actually states. Leave a field empty rather than guessing."
       >
-        <Field label="Eligibility summary" htmlFor="eligibilitySummary">
+        <Field label="Eligibility summary" htmlFor="eligibilitySummary"
+          required>
           <textarea
             id="eligibilitySummary"
             name="eligibilitySummary"
@@ -550,6 +572,8 @@ export function OpportunityForm({
             label="Application URL"
             htmlFor="applicationUrl"
             error={err.applicationUrl}
+            required
+            hint="Required to publish, unless you write application instructions below."
           >
             <input
               id="applicationUrl"
@@ -641,6 +665,7 @@ export function OpportunityForm({
           htmlFor="officialSourceUrl"
           error={err.officialSourceUrl}
           hint="The provider's own page. A draft can be saved without it; publishing cannot."
+          required
         >
           <input
             id="officialSourceUrl"
@@ -673,22 +698,30 @@ export function OpportunityForm({
       </Fieldset>
 
       <div className="sticky bottom-0 -mx-1 flex flex-wrap items-center gap-3 border-t border-line bg-canvas/95 px-1 py-4 backdrop-blur">
-        <SubmitButton name="intent" value="draft" pendingLabel="Saving…">
+        <input type="hidden" name="intent" defaultValue="draft" ref={intentRef} />
+        <SubmitButton
+          variant={allowPublish ? undefined : "accent"}
+          pendingLabel="Saving…"
+          onClick={() => setIntent("draft")}
+        >
           Save as draft
         </SubmitButton>
-        <SubmitButton
-          name="intent"
-          value="publish"
-          variant="accent"
-          pendingLabel="Publishing…"
-        >
-          Save &amp; publish
-        </SubmitButton>
+        {allowPublish ? (
+          <SubmitButton
+            variant="accent"
+            pendingLabel="Publishing…"
+            onClick={() => setIntent("publish")}
+          >
+            {adminCopy.actions.publish}
+          </SubmitButton>
+        ) : null}
         <Link href="/admin/opportunities" className="btn btn-ghost">
           Cancel
         </Link>
         <p className="hint ml-auto max-w-[36ch]">
-          Publishing runs the required-field check first.
+          {allowPublish
+            ? "Publishing checks the required fields first. Anything missing is listed and nothing is published."
+            : "Edits are saved to the draft. Publishing happens on the draft page."}
         </p>
       </div>
     </form>

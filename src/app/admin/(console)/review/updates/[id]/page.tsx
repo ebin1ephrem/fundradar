@@ -51,7 +51,7 @@ export default async function UpdateReviewPage({
       <PageHeader
         title="Detected changes"
         breadcrumbs={[
-          { label: "Review queue", href: "/admin/review?tab=updates" },
+          { label: "Review queue", href: "/admin/review" },
           { label: review.opportunity.title },
         ]}
         description={`${review.opportunity.title} · ${review.opportunity.providerName}`}
@@ -143,7 +143,7 @@ export default async function UpdateReviewPage({
               {!resolved ? (
                 <>
                   <button type="submit" className="btn btn-accent btn-sm">
-                    Approve the ticked changes
+                    Apply the ticked changes
                   </button>
                   <button
                     type="submit"

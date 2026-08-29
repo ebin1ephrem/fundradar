@@ -87,7 +87,7 @@ export default async function AdminDashboard() {
               label="Published"
               value={publishedOpportunities}
               hint="Live on the public site"
-              href="/admin/opportunities?status=PUBLISHED"
+              href="/admin/opportunities?tab=published"
             />
             <StatTile
               label="Closing soon"
@@ -105,7 +105,7 @@ export default async function AdminDashboard() {
               label="Drafts"
               value={drafts}
               hint="Not yet published"
-              href="/admin/opportunities?status=DRAFT"
+              href="/admin/opportunities?tab=drafts"
             />
             <StatTile
               label="Total records"
@@ -141,14 +141,14 @@ export default async function AdminDashboard() {
             <StatTile
               label="Updates detected"
               value={updatesDetected}
-              hint="Awaiting approval"
-              href="/admin/review?tab=updates"
+              hint="In the review queue"
+              href="/admin/review"
               emphasis
             />
             <StatTile
-              label="Pending reviews"
+              label="To review"
               value={pendingReviews}
-              hint="In the review queue"
+              hint="Waiting for a person"
               href="/admin/review"
               emphasis
             />

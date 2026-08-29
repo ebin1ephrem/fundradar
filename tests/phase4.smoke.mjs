@@ -70,9 +70,11 @@ try {
     review.includes("Original pasted material") && review.includes("Sahyadri Foundation"));
   check("review shows per-field evidence", review.includes("What we read, and from where"));
   check("review shows suggested categories", review.includes("Suggested categories"));
-  check("review shows the publication checklist", review.includes("Before publishing"));
+  check("review offers the two decisions and nothing else",
+    review.includes("Save as draft") && review.includes("Reject") &&
+    !review.includes("Publish publicly"));
   check("review shows the editable draft", Boolean(await page.$("#title")));
-  check("the draft is marked pending review", review.includes("Pending review"));
+  check("the draft is shown as awaiting review", review.includes("To review"));
 
   const extracted = await page.inputValue("#fundingMax");
   check("funding was extracted into the form", extracted === "2500000", extracted);
@@ -119,19 +121,42 @@ try {
   }
 
   const ready = await body();
-  check("the publication checklist reflects what is still missing",
-    ready.includes("Before publishing"));
+  check("review names anything still missing, without offering to publish",
+    !ready.includes("Publish publicly"));
 
-  // --- Approve and publish ---------------------------------------------
-  const publish = await page.$('button:has-text("Approve & publish")');
-  check("an approve and publish control exists", Boolean(publish));
+  // --- Accept into drafts, then publish from the draft page -------------
+  const acceptDraft = await page.$('button:has-text("Save as draft")');
+  check("a save-as-draft control exists", Boolean(acceptDraft));
+  if (acceptDraft) {
+    await acceptDraft.click();
+    await page.waitForURL(/\/admin\/opportunities\/[a-z0-9]+\?drafted=/, { timeout: 25000 })
+      .catch(() => {});
+  }
+  const publish = await page.$('button:has-text("Publish publicly")');
+  check("the draft page offers Publish publicly", Boolean(publish));
   if (publish && !(await publish.isDisabled())) {
     await publish.click();
     // Wait for the redirect's own marker: the review detail page is already
     // under /admin/review, so a path-shaped wait matches before the action runs.
-    await page.waitForURL(/[?&]published=/, { timeout: 25000 }).catch(() => {});
-    check("publishing confirms it is now live",
-      (await body()).includes("live on the public site"), page.url());
+    await page
+      .waitForFunction(
+        () =>
+          document.querySelector("[data-workflow-status]")?.getAttribute("data-workflow-status") ===
+          "PUBLISHED",
+        null, { timeout: 25000 })
+      .catch(() => {});
+    const badge = await page
+      .$eval("[data-workflow-status]", (el) => el.getAttribute("data-workflow-status"))
+      .catch(() => null);
+    const after = await body();
+    // Either it was complete and went live, or the gate refused it and said
+    // why. What must never happen is a silent no-op.
+    check(
+      "publishing either goes live or explains what is missing",
+      badge === "PUBLISHED" ||
+        (badge === "DRAFT" && /required fields? missing|Cannot publish yet/i.test(after)),
+      `badge=${badge ?? "none"}`,
+    );
   } else {
     check("publishing stays blocked until the record is complete", true,
       "gate held — checklist still outstanding");
@@ -188,9 +213,10 @@ try {
   check("the review queue lists what was collected",
     queue.includes("Coastal Resilience") || queue.includes("Textile"),
     queue.includes("Nothing waiting here") ? "queue empty" : "items present");
-  check("the queue has the spec's tabs",
-    ["New opportunities", "Updates", "Possible duplicates", "Low confidence", "Rejected"]
-      .every((t) => queue.includes(t)));
+  check("the queue converges on one prominent 'To review'",
+    queue.includes("To review") &&
+    !queue.includes("Possible duplicates") && !queue.includes("Low confidence"));
+  check("rejected stays reachable but secondary", /Rejected \(\d+\)/.test(queue));
 
   await page.goto(`${BASE}/opportunities?q=Coastal+Resilience+Grant`, {
     waitUntil: "domcontentloaded",

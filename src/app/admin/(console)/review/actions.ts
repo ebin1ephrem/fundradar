@@ -6,11 +6,18 @@ import type { DuplicateStatus, Prisma, RejectionReason } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/audit";
 import { requireAdmin } from "@/lib/auth/admin";
-import { publishOpportunity } from "../opportunities/actions";
 import { fingerprint } from "@/lib/ingestion";
 import { hashContent } from "@/lib/ingestion";
 import { recordVersion, snapshotOf } from "@/lib/versioning";
 import type { DetectedChange } from "@/lib/ingestion/changes";
+
+/** Review items still waiting on a person. Mirrors the review queue. */
+const OPEN_REVIEW_STATUSES = [
+  "UNASSIGNED",
+  "ASSIGNED",
+  "UNDER_REVIEW",
+  "READY_FOR_APPROVAL",
+] as const;
 
 function revalidateReview(opportunityId?: string) {
   revalidatePath("/admin/review");
@@ -158,27 +165,50 @@ export async function rejectAction(formData: FormData) {
   redirect("/admin/review?rejected=1");
 }
 
-/** Approve and publish, from the review screen. */
-export async function approveAction(formData: FormData) {
+/**
+ * Accepts an incoming record into the drafts an admin owns.
+ *
+ * Review is for deciding whether the material is worth keeping, not for
+ * publishing: the record moves to the existing DRAFT status and leaves the
+ * queue. Publication happens later, from the draft page, behind the
+ * required-field gate. No new status is introduced, and nothing here can put a
+ * record on the public site.
+ */
+export async function saveAsDraftAction(formData: FormData) {
   const admin = await requireAdmin();
   const opportunityId = String(formData.get("opportunityId") ?? "");
 
-  const result = await publishOpportunity(opportunityId, admin.id);
-  if (!result.ok) {
-    redirect(
-      `/admin/review/${opportunityId}?error=${encodeURIComponent(
-        `Cannot publish yet — ${result.missing.join("; ")}.`,
-      )}`,
-    );
+  const opportunity = await prisma.opportunity.findUnique({
+    where: { id: opportunityId },
+    select: { id: true, title: true, workflowStatus: true },
+  });
+  if (!opportunity) return;
+
+  // A record that is already published stays published — a detected update
+  // must never silently unpublish the live page.
+  if (opportunity.workflowStatus !== "PUBLISHED") {
+    await prisma.opportunity.update({
+      where: { id: opportunityId },
+      data: { workflowStatus: "DRAFT", isActive: false },
+    });
   }
 
   await prisma.reviewItem.updateMany({
-    where: { opportunityId, status: { not: "APPROVED" } },
+    where: { opportunityId, status: { in: [...OPEN_REVIEW_STATUSES] } },
     data: { status: "APPROVED", resolvedById: admin.id, resolvedAt: new Date() },
   });
 
+  await audit({
+    adminUserId: admin.id,
+    action: "review.saved_as_draft",
+    entityType: "Opportunity",
+    entityId: opportunityId,
+    summary: `Accepted "${opportunity.title}" into drafts`,
+  });
+
   revalidateReview(opportunityId);
-  redirect("/admin/review?published=1");
+  revalidatePath("/admin/opportunities");
+  redirect(`/admin/opportunities/${opportunityId}?drafted=1`);
 }
 
 /** Applies a detected update to the public record, with a version recorded. */

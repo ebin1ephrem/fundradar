@@ -9,6 +9,20 @@ import { FormError, FormNotice } from "@/components/ui/form";
 import { pickerCategories } from "@/lib/queries/categories";
 import { toFormValues } from "@/lib/admin/opportunity-form-values";
 import { publishRequirements } from "@/lib/publishing";
+import { ADMIN_STATUS_LABEL } from "@/lib/admin/status-view";
+import { admin as adminCopy } from "@/content/copy";
+
+/** Publication requirement -> the form field it refers to, so a missing item
+ *  in the readiness panel can jump straight to the input that fixes it. */
+const FIELD_ANCHOR: Record<string, string> = {
+  title: "title",
+  provider: "providerName",
+  description: "shortDescription",
+  officialSource: "officialSourceUrl",
+  application: "applicationUrl",
+  eligibility: "eligibilitySummary",
+  deadline: "applicationDeadline",
+};
 import { lifecycleStatus } from "@/lib/opportunity-status";
 import { cn, formatDate } from "@/lib/utils";
 import { OpportunityForm } from "../opportunity-form";
@@ -53,6 +67,7 @@ export default async function EditOpportunityPage({
     categoryTypes: opportunity.categories.map((c) => c.category.categoryType),
   });
   const blockers = requirements.filter((r) => r.blocking && !r.met);
+  const advisory = requirements.filter((r) => !r.blocking && !r.met);
   const isPublished = opportunity.workflowStatus === "PUBLISHED";
 
   return (
@@ -87,15 +102,17 @@ export default async function EditOpportunityPage({
             <FormError message={flags.error} />
           </div>
         ) : null}
-        {flags.saved || flags.published || flags.statusChanged ? (
+        {flags.saved || flags.published || flags.statusChanged || flags.drafted ? (
           <div className="mb-5">
             <FormNotice
               message={
                 flags.published
                   ? "Published. It is now searchable and listed on its category pages."
-                  : flags.statusChanged
-                    ? "Status updated."
-                    : "Changes saved."
+                  : flags.drafted
+                    ? "Saved as a draft. Complete the required fields, then publish it."
+                    : flags.statusChanged
+                      ? "Status updated."
+                      : "Changes saved."
               }
             />
           </div>
@@ -112,56 +129,72 @@ export default async function EditOpportunityPage({
 
           <aside className="grid h-fit gap-4 xl:sticky xl:top-6">
             <section className="card p-4">
-              <h2 className="mb-3 text-[13px] font-medium">Publication checklist</h2>
-              <ul className="grid gap-1.5">
-                {requirements.map((req) => (
-                  <li key={req.key} className="flex items-start gap-2">
-                    <span
-                      className={cn(
-                        "mt-0.5 grid size-4 shrink-0 place-items-center rounded-full",
-                        req.met
-                          ? "bg-accent text-ink"
-                          : req.blocking
-                            ? "bg-danger/10 text-danger"
-                            : "bg-subtle text-faint",
-                      )}
-                    >
-                      {req.met ? (
-                        <Check className="size-2.5" strokeWidth={3} />
-                      ) : (
-                        <X className="size-2.5" strokeWidth={3} />
-                      )}
-                    </span>
-                    <span className="min-w-0">
-                      <span
-                        className={cn(
-                          "block text-[12.5px] leading-snug",
-                          req.met ? "text-muted" : "text-ink",
-                        )}
-                      >
-                        {req.label}
-                        {!req.blocking ? (
-                          <span className="text-faint"> · advisory</span>
-                        ) : null}
-                      </span>
-                      {!req.met && req.detail ? (
-                        <span className="mt-0.5 block text-[11.5px] text-faint">
-                          {req.detail}
-                        </span>
-                      ) : null}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-3 border-t border-line pt-3 text-[12px] text-muted">
-                {blockers.length === 0
-                  ? "Ready to publish."
-                  : `${blockers.length} requirement${blockers.length === 1 ? "" : "s"} outstanding.`}
+              <h2 className="mb-1 text-[11px] font-semibold tracking-[0.08em] text-muted uppercase">
+                Status
+              </h2>
+              <p className="text-[15px] font-medium tracking-[-0.02em]">
+                {ADMIN_STATUS_LABEL[opportunity.workflowStatus]}
               </p>
+
+              <h3 className="mt-5 mb-2 text-[11px] font-semibold tracking-[0.08em] text-muted uppercase">
+                Publication readiness
+              </h3>
+              <p
+                className={cn(
+                  "flex items-center gap-2 text-[13px] font-medium",
+                  blockers.length === 0 ? "text-ok" : "text-danger",
+                )}
+              >
+                <span
+                  className={cn(
+                    "grid size-4 shrink-0 place-items-center rounded-full",
+                    blockers.length === 0
+                      ? "bg-accent text-ink"
+                      : "bg-danger/10 text-danger",
+                  )}
+                >
+                  {blockers.length === 0 ? (
+                    <Check className="size-2.5" strokeWidth={3} />
+                  ) : (
+                    <X className="size-2.5" strokeWidth={3} />
+                  )}
+                </span>
+                {blockers.length === 0
+                  ? adminCopy.checklist.ready
+                  : adminCopy.checklist.missing(blockers.length)}
+              </p>
+
+              {blockers.length ? (
+                <>
+                  <p className="mt-3 text-[12px] text-muted">
+                    {adminCopy.checklist.heading}:
+                  </p>
+                  <ul className="mt-1.5 grid gap-1">
+                    {blockers.map((req) => (
+                      <li key={req.key}>
+                        {/* Jumps to the field rather than making the admin hunt. */}
+                        <a
+                          href={`#${req.key === "category" || req.key === "opportunityType" ? "categories" : FIELD_ANCHOR[req.key] ?? "opportunity-form"}`}
+                          className="flex items-start gap-2 text-[12.5px] text-ink underline-offset-2 hover:underline"
+                        >
+                          <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-danger" />
+                          {req.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              ) : null}
+
+              {advisory.length ? (
+                <p className="mt-3 border-t border-line pt-3 text-[11.5px] text-faint">
+                  Recommended but not required: {advisory.map((r) => r.label.toLowerCase()).join(", ")}.
+                </p>
+              ) : null}
             </section>
 
             <section className="card p-4">
-              <h2 className="mb-3 text-[13px] font-medium">Status</h2>
+              <h2 className="mb-3 text-[13px] font-medium">Actions</h2>
               <div className="grid gap-2">
                 {isPublished ? (
                   <StatusButton id={opportunity.id} status="DRAFT" label="Unpublish to draft" />
@@ -169,7 +202,7 @@ export default async function EditOpportunityPage({
                   <StatusButton
                     id={opportunity.id}
                     status="PUBLISHED"
-                    label="Approve & publish"
+                    label={adminCopy.actions.publish}
                     variant="accent"
                     disabled={blockers.length > 0}
                   />

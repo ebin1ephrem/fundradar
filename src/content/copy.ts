@@ -600,7 +600,9 @@ export const admin = {
     note: "Internal only. Confidence never appears publicly.",
   },
   actions: {
-    publish: "Approve & publish",
+    // The administrator publishes from the draft page; review only accepts or
+    // rejects. There is no separate "approve" step in the interface.
+    publish: "Publish publicly",
     draft: "Save as draft",
     edit: "Edit",
     reExtract: "Request more extraction",
@@ -612,8 +614,10 @@ export const admin = {
     archive: "Archive",
   },
   checklist: {
-    heading: "Before publishing, confirm:",
-    cta: "Publish opportunity",
+    heading: "Required before publishing",
+    cta: "Publish publicly",
+    ready: "Required information complete",
+    missing: (n: number) => `${n} required field${n === 1 ? "" : "s"} missing`,
   },
   leadStatus: {
     ANONYMOUS: "Anonymous visitor",

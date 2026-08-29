@@ -10,10 +10,10 @@ import { pickerCategories } from "@/lib/queries/categories";
 import { toFormValues } from "@/lib/admin/opportunity-form-values";
 import { publishRequirements } from "@/lib/publishing";
 import { FIELD_LABEL, type ExtractionField } from "@/lib/ai/schema";
-import { cn, formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import { OpportunityForm } from "../../opportunities/opportunity-form";
 import { saveOpportunityAction } from "../../opportunities/actions";
-import { approveAction, saveReviewNotesAction } from "../actions";
+import { saveAsDraftAction, saveReviewNotesAction } from "../actions";
 import { admin as adminCopy } from "@/content/copy";
 import { SourcePanel } from "./source-panel";
 import {
@@ -225,50 +225,42 @@ export default async function ReviewOpportunityPage({
               />
 
               <section className="card h-fit p-4">
-                <h2 className="mb-2.5 text-[13px] font-medium">
-                  {adminCopy.checklist.heading}
-                </h2>
-                <ul className="grid gap-1">
-                  {requirements
-                    .filter((r) => r.blocking)
-                    .map((requirement) => (
-                      <li
-                        key={requirement.key}
-                        className={cn(
-                          "flex items-start gap-2 text-[12px]",
-                          requirement.met ? "text-muted" : "text-ink",
-                        )}
-                      >
-                        <span
-                          className={cn(
-                            "mt-1 size-1.5 shrink-0 rounded-full",
-                            requirement.met ? "bg-accent" : "bg-danger",
-                          )}
-                        />
-                        {requirement.label}
-                      </li>
-                    ))}
-                </ul>
+                <h2 className="mb-1.5 text-[13px] font-medium">Decide</h2>
+                <p className="text-[12px] leading-relaxed text-muted">
+                  Keep it and it becomes a draft you can finish and publish.
+                  Reject it and the same material will not come back.
+                </p>
 
                 <div className="mt-4 grid gap-2 border-t border-line pt-3.5">
-                  <form action={approveAction}>
+                  <form action={saveAsDraftAction}>
                     <input type="hidden" name="opportunityId" value={opportunity.id} />
-                    <button
-                      type="submit"
-                      disabled={blockers.length > 0}
-                      className="btn btn-accent btn-sm w-full"
-                    >
-                      {adminCopy.actions.publish}
+                    <button type="submit" className="btn btn-accent btn-sm w-full">
+                      {adminCopy.actions.draft}
                     </button>
                   </form>
-                  {blockers.length ? (
-                    <p className="text-[11.5px] text-muted">
-                      {blockers.length} requirement{blockers.length === 1 ? "" : "s"} still
-                      outstanding. Save your edits below first.
-                    </p>
-                  ) : null}
                   <RejectPanel opportunityId={opportunity.id} />
                 </div>
+
+                {/* Context only. Publishing happens on the draft page. */}
+                {blockers.length ? (
+                  <div className="mt-4 border-t border-line pt-3.5">
+                    <p className="text-[12px] text-muted">
+                      {blockers.length} field{blockers.length === 1 ? "" : "s"} still
+                      needed before this can be published:
+                    </p>
+                    <ul className="mt-1.5 grid gap-1">
+                      {blockers.map((requirement) => (
+                        <li
+                          key={requirement.key}
+                          className="flex items-start gap-2 text-[12px] text-ink"
+                        >
+                          <span className="mt-1 size-1.5 shrink-0 rounded-full bg-danger" />
+                          {requirement.label}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
 
                 {opportunity.officialSourceUrl ? (
                   <a
@@ -308,6 +300,7 @@ export default async function ReviewOpportunityPage({
             <div>
               <h2 className="eyebrow mb-3">The draft — edit anything</h2>
               <OpportunityForm
+                allowPublish={false}
                 action={saveOpportunityAction}
                 opportunity={toFormValues(opportunity)}
                 categories={categories}

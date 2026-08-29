@@ -1,39 +1,39 @@
 import Link from "next/link";
-import type { Prisma, WorkflowStatus } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth/admin";
 import { PageBody, PageHeader } from "@/components/admin/page-header";
 import { WorkflowBadge, LifecycleBadge } from "@/components/admin/status-badge";
 import { CLOSING_SOON_DAYS, lifecycleStatus } from "@/lib/opportunity-status";
 import { cn, formatDate, fundingRangeLabel } from "@/lib/utils";
-import { WORKFLOW_LABEL } from "@/lib/opportunity-status";
+import {
+  OPPORTUNITY_TABS,
+  OPPORTUNITY_TAB_EMPTY,
+  OPPORTUNITY_TAB_LABEL,
+  opportunityTabWhere,
+  resolveOpportunityTab,
+} from "@/lib/admin/status-view";
 
 export const metadata = { title: "Opportunities" };
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 25;
-const STATUS_TABS: (WorkflowStatus | "ALL")[] = [
-  "ALL",
-  "PUBLISHED",
-  "DRAFT",
-  "PENDING_REVIEW",
-  "UPDATE_PENDING_REVIEW",
-  "ARCHIVED",
-];
 
 export default async function OpportunitiesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; q?: string; closing?: string; page?: string }>;
+  searchParams: Promise<{ tab?: string; status?: string; q?: string; closing?: string; page?: string }>;
 }) {
   await requireAdmin();
   const params = await searchParams;
-  const status = params.status ?? "ALL";
+  // `status` is still accepted so older bookmarks and links keep working.
+  const tab = resolveOpportunityTab(params.tab, params.status);
   const query = (params.q ?? "").trim();
   const page = Math.max(1, Number(params.page ?? 1) || 1);
 
-  const where: Prisma.OpportunityWhereInput = {};
-  if (status !== "ALL") where.workflowStatus = status as WorkflowStatus;
+  // Records waiting for review, rejected records and archived records never
+  // appear here — they belong to the review queue.
+  const where: Prisma.OpportunityWhereInput = { ...opportunityTabWhere(tab) };
   if (params.closing === "soon") {
     where.isRollingDeadline = false;
     where.applicationDeadline = {
@@ -49,7 +49,7 @@ export default async function OpportunitiesPage({
     ];
   }
 
-  const [rows, total, statusCounts] = await Promise.all([
+  const [rows, total, tabCounts] = await Promise.all([
     prisma.opportunity.findMany({
       where,
       orderBy: [{ updatedAt: "desc" }],
@@ -65,20 +65,23 @@ export default async function OpportunitiesPage({
       },
     }),
     prisma.opportunity.count({ where }),
-    prisma.opportunity.groupBy({ by: ["workflowStatus"], _count: { _all: true } }),
+    // Counted through the same predicate the rows use, so a tab can never
+    // disagree with its own number.
+    Promise.all(
+      OPPORTUNITY_TABS.map(async (key) =>
+        [key, await prisma.opportunity.count({ where: opportunityTabWhere(key) })] as const,
+      ),
+    ),
   ]);
 
-  const countFor = (tab: string) =>
-    tab === "ALL"
-      ? statusCounts.reduce((sum, s) => sum + s._count._all, 0)
-      : (statusCounts.find((s) => s.workflowStatus === tab)?._count._all ?? 0);
+  const countByTab = new Map(tabCounts);
 
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const linkFor = (next: Record<string, string | undefined>) => {
     const sp = new URLSearchParams();
-    const merged = { status, q: query, closing: params.closing, ...next };
+    const merged = { tab, q: query, closing: params.closing, ...next };
     for (const [k, v] of Object.entries(merged)) {
-      if (v && v !== "ALL") sp.set(k, v);
+      if (v && v !== "all") sp.set(k, v);
     }
     const qs = sp.toString();
     return `/admin/opportunities${qs ? `?${qs}` : ""}`;
@@ -88,7 +91,7 @@ export default async function OpportunitiesPage({
     <>
       <PageHeader
         title="Opportunities"
-        description="Every record in the funding database, at every stage of its life. Only PUBLISHED records appear on the public site."
+        description="Manage the opportunities you've drafted or published. Incoming records waiting for a person live in the review queue."
         actions={
           <Link href="/admin/opportunities/new" className="btn btn-primary btn-sm">
             Add opportunity
@@ -99,12 +102,12 @@ export default async function OpportunitiesPage({
       <PageBody>
         <div className="mb-5 flex flex-wrap items-center gap-3">
           <nav className="flex flex-wrap gap-1.5" aria-label="Status">
-            {STATUS_TABS.map((tab) => {
-              const isActive = tab === status;
+            {OPPORTUNITY_TABS.map((key) => {
+              const isActive = key === tab;
               return (
                 <Link
-                  key={tab}
-                  href={linkFor({ status: tab, page: undefined })}
+                  key={key}
+                  href={linkFor({ tab: key, page: undefined })}
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
                     "inline-flex items-center gap-2 rounded-[7px] border px-3 py-1.5 text-[13px] transition-colors duration-200",
@@ -113,14 +116,14 @@ export default async function OpportunitiesPage({
                       : "border-line bg-canvas text-muted hover:border-line-strong hover:text-ink",
                   )}
                 >
-                  {tab === "ALL" ? "All" : (WORKFLOW_LABEL[tab] ?? tab)}
+                  {OPPORTUNITY_TAB_LABEL[key]}
                   <span
                     className={cn(
                       "text-[11.5px] tabular-nums",
                       isActive ? "text-accent" : "text-faint",
                     )}
                   >
-                    {countFor(tab)}
+                    {countByTab.get(key) ?? 0}
                   </span>
                 </Link>
               );
@@ -128,9 +131,7 @@ export default async function OpportunitiesPage({
           </nav>
 
           <form className="ml-auto flex items-center gap-2" action="/admin/opportunities">
-            {status !== "ALL" ? (
-              <input type="hidden" name="status" value={status} />
-            ) : null}
+            {tab !== "all" ? <input type="hidden" name="tab" value={tab} /> : null}
             <input
               type="search"
               name="q"
@@ -174,17 +175,24 @@ export default async function OpportunitiesPage({
                 {rows.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-4 py-14 text-center">
-                      <p className="text-[14px] text-muted">
-                        {query || status !== "ALL"
-                          ? "No opportunities match this view."
-                          : "No opportunities yet."}
+                      <p className="text-[14.5px] font-medium">
+                        {query
+                          ? "No opportunities match this search"
+                          : OPPORTUNITY_TAB_EMPTY[tab].title}
                       </p>
-                      <Link
-                        href="/admin/opportunities/new"
-                        className="btn btn-secondary btn-sm mt-4"
-                      >
-                        Add the first one
-                      </Link>
+                      <p className="mx-auto mt-1.5 max-w-[46ch] text-[13.5px] text-muted">
+                        {query
+                          ? "Try a different title or provider."
+                          : OPPORTUNITY_TAB_EMPTY[tab].body}
+                      </p>
+                      {tab === "expired" || query ? null : (
+                        <Link
+                          href="/admin/opportunities/new"
+                          className="btn btn-secondary btn-sm mt-4"
+                        >
+                          Add an opportunity
+                        </Link>
+                      )}
                     </td>
                   </tr>
                 ) : (
