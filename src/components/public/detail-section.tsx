@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Reveal } from "@/components/public/motion";
 
 export function DetailSection({
   id,
@@ -10,12 +11,12 @@ export function DetailSection({
   children: ReactNode;
 }) {
   return (
-    <section id={id} className="scroll-mt-24 border-t border-line pt-8">
+    <Reveal as="section" id={id} className="scroll-mt-24 border-t border-line pt-8">
       <h2 className="mb-4 text-[21px] leading-tight font-medium tracking-[-0.028em]">
         {title}
       </h2>
       {children}
-    </section>
+    </Reveal>
   );
 }
 

@@ -9,6 +9,14 @@ import { Icon } from "@/components/admin/icon";
 import { savedOpportunityIds } from "@/lib/leads/identity";
 import { brand, home, search as searchCopy, seo, weeklySignal } from "@/content/copy";
 import { JsonLd, organisationLd, websiteLd } from "@/components/public/structured-data";
+import {
+  CountUp,
+  HeroOpportunitySignals,
+  MaskedReveal,
+  ParallaxLayer,
+  RadarStrip,
+  Reveal,
+} from "@/components/public/motion";
 
 const SITE = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
@@ -59,50 +67,49 @@ export default async function HomePage() {
           className="dot-grid pointer-events-none absolute inset-0 opacity-[0.55]"
           aria-hidden="true"
         />
-        <div className="page-shell relative py-16 lg:py-28">
-          <p className="eyebrow">{home.hero.eyebrow}</p>
-          <h1 className="display-xl mt-4 max-w-[19ch]">
-            {home.hero.headline}{" "}
-            <span className="text-muted">{home.hero.headlineSecond}</span>
-          </h1>
+        <div className="page-shell relative grid gap-12 py-16 lg:py-28 xl:grid-cols-[minmax(0,1fr)_300px] xl:items-center">
+          <div>
+            <Reveal as="p" className="eyebrow" delay={0}>{home.hero.eyebrow}</Reveal>
+            <h1 className="display-xl mt-4 max-w-[19ch]">
+              <MaskedReveal delay={60}>{home.hero.headline}</MaskedReveal>
+              <MaskedReveal className="text-muted" delay={145}>{home.hero.headlineSecond}</MaskedReveal>
+            </h1>
 
-          <p className="lede mt-6 max-w-[58ch]">{home.hero.subline}</p>
+            <Reveal as="p" className="lede mt-6 max-w-[58ch]" delay={235}>{home.hero.subline}</Reveal>
 
-          <div className="mt-9 max-w-[720px]">
-            <SearchBar size="lg" />
+            <Reveal className="mt-9 max-w-[720px]" delay={330}>
+              <SearchBar size="lg" />
+              <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13.5px] text-muted">
+                <span>{home.search.chipsLabel}</span>
+                {searchCopy.chips.map((item) => (
+                  <Link key={item.href} href={item.href} className="underline underline-offset-[3px] transition-colors duration-200 hover:text-ink">
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </Reveal>
+
+            <Reveal delay={420}>
+              <p className="mt-6 text-[13.5px] text-muted">{home.hero.supporting}</p>
+              <dl className="mt-10 grid max-w-[640px] grid-cols-2 gap-x-8 gap-y-6 border-t border-line pt-8 sm:grid-cols-4">
+                <Stat value={total} label="Opportunities" />
+                <Stat value={providerCount} label="Providers" />
+                <Stat value={equityFree.total} label="Equity-free" />
+                <Stat value={closingSoon.total} label="Closing in 30 days" />
+              </dl>
+            </Reveal>
           </div>
-
-          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13.5px] text-muted">
-            <span>{home.search.chipsLabel}</span>
-            {searchCopy.chips.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="underline underline-offset-[3px] transition-colors duration-200 hover:text-ink"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-
-          <p className="mt-6 text-[13.5px] text-muted">
-            {home.hero.supporting}
-          </p>
-
-          <dl className="mt-10 grid max-w-[640px] grid-cols-2 gap-x-8 gap-y-6 border-t border-line pt-8 sm:grid-cols-4">
-            <Stat value={total} label="Opportunities" />
-            <Stat value={providerCount} label="Providers" />
-            <Stat value={equityFree.total} label="Equity-free" />
-            <Stat value={closingSoon.total} label="Closing in 30 days" />
-          </dl>
+          <HeroOpportunitySignals closing={closingSoon.hits[0]} recent={recent.hits[0]} />
         </div>
       </section>
+
+      <RadarStrip closing={closingSoon.hits} recent={recent.hits} />
 
       {/* Categories ------------------------------------------------------ */}
       {categories.length ? (
         <section className="section-y border-b border-line">
           <div className="page-shell">
-            <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+            <Reveal className="mb-8 flex flex-wrap items-end justify-between gap-4">
               <div>
                 <p className="eyebrow">{home.categories.eyebrow}</p>
                 <h2 className="display-lg mt-2.5 max-w-[18ch]">
@@ -114,16 +121,16 @@ export default async function HomePage() {
               </div>
               <Link href="/categories" className="btn btn-secondary">
                 {home.categories.cta}
-                <ArrowRight className="size-4" strokeWidth={1.8} />
+                <ArrowRight className="motion-arrow size-4" strokeWidth={1.8} />
               </Link>
-            </div>
+            </Reveal>
 
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Reveal variant="group" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {categories.map((category) => (
                 <Link
                   key={category.id}
                   href={`/categories/${category.slug}`}
-                  className="group flex flex-col rounded-[12px] border border-line p-6 transition-[border-color,transform] duration-200 hover:-translate-y-[3px] hover:border-line-strong"
+                  className="category-card group flex flex-col rounded-[12px] border border-line p-6"
                 >
                   <span className="grid size-10 place-items-center rounded-[9px] bg-subtle transition-colors duration-200 group-hover:bg-accent">
                     <Icon name={category.icon} className="size-[18px]" />
@@ -142,14 +149,14 @@ export default async function HomePage() {
                       opportunities
                     </span>
                     <ArrowUpRight
-                      className="size-4 transition-transform duration-200 group-hover:translate-x-[2px] group-hover:-translate-y-[2px]"
+                      className="motion-arrow size-4"
                       strokeWidth={1.7}
                       aria-hidden="true"
                     />
                   </p>
                 </Link>
               ))}
-            </div>
+            </Reveal>
           </div>
         </section>
       ) : null}
@@ -165,11 +172,11 @@ export default async function HomePage() {
               href="/opportunities?closing=30"
               linkLabel={home.closing.cta}
             />
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <Reveal variant="group" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {closingSoon.hits.map((hit) => (
                 <OpportunityCard key={hit.id} hit={hit} saved={savedIds.has(hit.id)} />
               ))}
-            </div>
+            </Reveal>
           </div>
         </section>
       ) : null}
@@ -177,17 +184,17 @@ export default async function HomePage() {
       {/* How it works ---------------------------------------------------- */}
       <section id="how-it-works" className="section-y border-t border-line">
         <div className="page-shell">
-          <p className="eyebrow">{home.howItWorks.eyebrow}</p>
-          <h2 className="display-lg mt-2.5 max-w-[16ch]">
-            {home.howItWorks.headline}
-          </h2>
-          <ol className="mt-9 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <Reveal>
+            <p className="eyebrow">{home.howItWorks.eyebrow}</p>
+            <h2 className="display-lg mt-2.5 max-w-[16ch]">{home.howItWorks.headline}</h2>
+          </Reveal>
+          <Reveal as="ol" variant="group" stagger={80} className="mt-9 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             {home.howItWorks.steps.map((step, i) => (
               <li
                 key={step.title}
-                className="rounded-[12px] border border-line p-5"
+                className="how-step rounded-[12px] border border-line p-5"
               >
-                <span className="font-display text-[13px] font-medium tabular-nums text-muted">
+                <span className="how-step-number font-display text-[13px] font-medium tabular-nums text-muted transition-colors duration-200">
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <p className="mt-3 text-[15.5px] font-medium tracking-[-0.02em]">
@@ -198,18 +205,15 @@ export default async function HomePage() {
                 </p>
               </li>
             ))}
-          </ol>
+          </Reveal>
         </div>
       </section>
 
       {/* Founder story --------------------------------------------------- */}
       <section className="pb-4">
         <div className="page-shell-wide">
-          <div className="on-dark panel-dark relative overflow-hidden px-6 py-14 lg:px-16 lg:py-20">
-            <div
-              className="dot-grid-dark pointer-events-none absolute inset-0 opacity-40"
-              aria-hidden="true"
-            />
+          <Reveal className="on-dark panel-dark relative overflow-hidden px-6 py-14 lg:px-16 lg:py-20">
+            <ParallaxLayer className="dot-grid-dark pointer-events-none absolute -inset-y-8 inset-x-0 opacity-40" distance={18} />
             <div className="relative grid gap-12 lg:grid-cols-[1fr_1.1fr] lg:items-start">
               <div>
                 <p className="text-[11px] font-semibold tracking-[0.09em] text-on-dark-muted uppercase">
@@ -226,7 +230,7 @@ export default async function HomePage() {
                 </p>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-3">
+              <Reveal variant="group" className="grid gap-3 sm:grid-cols-3">
                 {home.trust.pillars.map((pillar, i) => (
                   <Pillar
                     key={pillar.title}
@@ -235,9 +239,9 @@ export default async function HomePage() {
                     body={pillar.body}
                   />
                 ))}
-              </div>
+              </Reveal>
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
 
@@ -252,11 +256,11 @@ export default async function HomePage() {
               href="/opportunities?sort=newest"
               linkLabel={home.recent.cta}
             />
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <Reveal variant="group" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {recent.hits.map((hit) => (
                 <OpportunityCard key={hit.id} hit={hit} saved={savedIds.has(hit.id)} />
               ))}
-            </div>
+            </Reveal>
           </div>
         </section>
       ) : null}
@@ -264,11 +268,11 @@ export default async function HomePage() {
       {/* Quick routes ---------------------------------------------------- */}
       <section className="border-t border-line bg-subtle py-14 lg:py-20">
         <div className="page-shell">
-          <h2 className="display-md">{home.open.headline}</h2>
-          <p className="mt-2 text-[14.5px] text-muted">
-            {home.open.subline}
-          </p>
-          <div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <Reveal>
+            <h2 className="display-md">{home.open.headline}</h2>
+            <p className="mt-2 text-[14.5px] text-muted">{home.open.subline}</p>
+          </Reveal>
+          <Reveal variant="group" className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <Route
               href="/opportunities?provider=GOVERNMENT"
               title="Government grants"
@@ -293,13 +297,13 @@ export default async function HomePage() {
               title="Closing this week"
               description="Deadlines in the next seven days."
             />
-          </div>
+          </Reveal>
         </div>
       </section>
 
       {/* Weekly Radar / closing CTA -------------------------------------- */}
       <section className="border-t border-line py-14 lg:py-20">
-        <div className="page-shell grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:items-center">
+        <Reveal className="page-shell grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:items-center">
           <div>
             <p className="eyebrow">{weeklySignal.eyebrow}</p>
             <h2 className="display-md mt-2.5 max-w-[18ch]">
@@ -319,10 +323,10 @@ export default async function HomePage() {
             </p>
             <Link href="/dashboard/alerts" className="btn btn-primary mt-5">
               {home.banner.cta}
-              <ArrowRight className="size-4" strokeWidth={1.8} />
+              <ArrowRight className="motion-arrow size-4" strokeWidth={1.8} />
             </Link>
           </div>
-        </div>
+        </Reveal>
       </section>
     </>
   );
@@ -334,7 +338,7 @@ function Stat({ value, label }: { value: number; label: string }) {
       <dt className="sr-only">{label}</dt>
       <dd>
         <span className="block font-display text-[32px] leading-none font-medium tracking-[-0.035em] tabular-nums">
-          {value.toLocaleString("en-IN")}
+          <CountUp value={value} />
         </span>
         <span className="mt-1.5 block text-[13px] text-muted">{label}</span>
       </dd>
@@ -356,7 +360,7 @@ function Header({
   linkLabel: string;
 }) {
   return (
-    <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
+    <Reveal className="mb-7 flex flex-wrap items-end justify-between gap-4">
       <div>
         <p className="eyebrow">{eyebrow}</p>
         <h2 className="display-md mt-2.5">{title}</h2>
@@ -365,7 +369,7 @@ function Header({
       <Link href={href} className="text-[14px] text-muted underline underline-offset-2 hover:text-ink">
         {linkLabel}
       </Link>
-    </div>
+    </Reveal>
   );
 }
 
@@ -379,7 +383,7 @@ function Pillar({
   body: string;
 }) {
   return (
-    <div className="rounded-[12px] border border-[rgba(255,255,255,0.08)] bg-ink-3 p-5">
+    <div className="rounded-[12px] border border-[rgba(255,255,255,0.08)] bg-ink-3 p-5 transition-transform duration-200 hover:-translate-y-0.5">
       <span className="grid size-8 place-items-center rounded-[7px] bg-accent text-ink">
         <IconCmp className="size-4" strokeWidth={1.7} />
       </span>
@@ -403,12 +407,12 @@ function Route({
   return (
     <Link
       href={href}
-      className="group rounded-[12px] border border-line bg-canvas p-5 transition-[border-color,transform] duration-200 hover:-translate-y-[2px] hover:border-line-strong"
+      className="route-card group rounded-[12px] border border-line bg-canvas p-5"
     >
       <p className="flex items-center justify-between text-[15.5px] font-medium tracking-[-0.02em]">
         {title}
         <ArrowUpRight
-          className="size-4 text-faint transition-transform duration-200 group-hover:translate-x-[2px] group-hover:-translate-y-[2px]"
+          className="motion-arrow size-4 text-faint"
           strokeWidth={1.7}
           aria-hidden="true"
         />

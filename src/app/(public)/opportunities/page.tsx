@@ -12,6 +12,7 @@ import { Pagination } from "@/components/public/pagination";
 import { LeadGateSubject } from "@/components/lead/gate-context";
 import { savedOpportunityIds } from "@/lib/leads/identity";
 import { brand, search as searchCopy, seo } from "@/content/copy";
+import { Reveal } from "@/components/public/motion/reveal";
 
 export const metadata: Metadata = {
   title: seo.opportunities.title,
@@ -74,7 +75,7 @@ export default async function OpportunitiesPage({
       />
 
       <div className="border-b border-line">
-        <div className="page-shell py-10 lg:py-14">
+        <Reveal className="page-shell py-10 lg:py-14">
           <nav aria-label="Breadcrumb" className="mb-4">
             <ol className="flex items-center gap-1.5 text-[12.5px] text-muted">
               <li>
@@ -97,12 +98,12 @@ export default async function OpportunitiesPage({
           <div className="mt-7 max-w-[680px]">
             <SearchBar action={BASE} params={params} defaultValue={filters.q} />
           </div>
-        </div>
+        </Reveal>
       </div>
 
       <div className="page-shell py-8 lg:py-10">
         <div className="grid gap-9 lg:grid-cols-[248px_1fr]">
-          <aside className="lg:sticky lg:top-[92px] lg:h-fit lg:max-h-[calc(100dvh-116px)] lg:overflow-y-auto lg:pr-1">
+          <Reveal as="aside" className="lg:sticky lg:top-[92px] lg:h-fit lg:max-h-[calc(100dvh-116px)] lg:overflow-y-auto lg:pr-1">
             <details open className="lg:open">
               <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-[8px] border border-line px-3.5 py-2.5 lg:hidden">
                 <span className="flex items-center gap-2 text-[14px] font-medium">
@@ -136,9 +137,9 @@ export default async function OpportunitiesPage({
                 />
               </div>
             </details>
-          </aside>
+          </Reveal>
 
-          <div className="min-w-0">
+          <Reveal className="min-w-0" delay={90}>
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
               <p className="text-[13.5px] text-muted">
                 Showing{" "}
@@ -173,7 +174,7 @@ export default async function OpportunitiesPage({
               pages={results.pages}
               total={results.total}
             />
-          </div>
+          </Reveal>
         </div>
       </div>
     </>

@@ -4,6 +4,7 @@ import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { PUBLIC_CACHE_SECONDS, PUBLIC_CATALOG_TAG } from "@/lib/cache-tags";
 import { brand } from "@/content/copy";
+import { Reveal } from "@/components/public/motion/reveal";
 
 const EXPLORE = [
   { href: "/opportunities", label: "Open opportunities" },
@@ -42,7 +43,7 @@ export async function SiteFooter() {
   return (
     <footer className="border-t border-line bg-subtle">
       <div className="page-shell py-14 lg:py-20">
-        <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+        <Reveal className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
           <div className="max-w-[34ch]">
             <Link href="/" aria-label={`${brand.name} home`}>
               <Image
@@ -72,7 +73,7 @@ export async function SiteFooter() {
             ]}
           />
           <FooterColumn title="Company" items={COMPANY} />
-        </div>
+        </Reveal>
 
         <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-6">
           <p className="text-[12.5px] text-muted">

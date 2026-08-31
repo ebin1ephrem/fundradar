@@ -31,6 +31,7 @@ import {
   breadcrumbLd,
   opportunityLd,
 } from "@/components/public/structured-data";
+import { Reveal } from "@/components/public/motion/reveal";
 
 const SITE = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
@@ -216,7 +217,7 @@ export default async function OpportunityPage({
           </nav>
 
           <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
-            <div className="min-w-0">
+            <Reveal className="min-w-0">
               <div className="mb-4 flex flex-wrap items-center gap-1.5">
                 <span
                   className={cn(
@@ -254,15 +255,15 @@ export default async function OpportunityPage({
                     <Link
                       key={link.category.slug}
                       href={`/categories/${link.category.slug}`}
-                      className="pill transition-colors duration-200 hover:border-ink hover:text-ink"
+                      className="pill chip-interactive hover:border-ink hover:text-ink"
                     >
                       {link.category.name}
                     </Link>
                   ))}
               </div>
-            </div>
+            </Reveal>
 
-            <aside className="lg:sticky lg:top-[92px] lg:h-fit">
+            <Reveal as="aside" className="lg:sticky lg:top-[92px] lg:h-fit" delay={100}>
               <div className="rounded-[12px] border border-line bg-canvas p-5 shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
                 <p className="eyebrow mb-2">At a glance</p>
                 <dl>
@@ -314,7 +315,7 @@ export default async function OpportunityPage({
                       href={opportunity.applicationUrl}
                     >
                       {oppCopy.cta.apply}
-                      <ArrowUpRight className="size-4" strokeWidth={1.8} />
+                      <ArrowUpRight className="motion-arrow size-4" strokeWidth={1.8} />
                     </ApplyLink>
                   ) : null}
                   <div className="grid grid-cols-[1fr_auto_auto] gap-2">
@@ -338,7 +339,7 @@ export default async function OpportunityPage({
                   never charges for an application.
                 </p>
               </div>
-            </aside>
+            </Reveal>
           </div>
         </div>
       </div>
@@ -602,7 +603,7 @@ export default async function OpportunityPage({
 
         {similar.length ? (
           <section className="mt-14 border-t border-line pt-10">
-            <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+            <Reveal className="mb-6 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <h2 className="display-md">{oppCopy.related.headline}</h2>
                 <p className="mt-1.5 text-[14px] text-muted">
@@ -617,12 +618,12 @@ export default async function OpportunityPage({
               >
                 {oppCopy.cta.similar}
               </Link>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            </Reveal>
+            <Reveal variant="group" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {similar.map((hit) => (
                 <OpportunityCard key={hit.id} hit={hit} />
               ))}
-            </div>
+            </Reveal>
           </section>
         ) : null}
       </div>

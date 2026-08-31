@@ -13,6 +13,7 @@ import { TrackView } from "@/components/lead/tracker";
 import { savedOpportunityIds } from "@/lib/leads/identity";
 import { brand, home, search as searchCopy, seo } from "@/content/copy";
 import { JsonLd, breadcrumbLd } from "@/components/public/structured-data";
+import { Reveal } from "@/components/public/motion/reveal";
 
 const SITE = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
@@ -124,7 +125,7 @@ export default async function CategoryPage({
       <TrackView type="category_view" categoryId={category.id} />
 
       <div className="border-b border-line">
-        <div className="page-shell py-10 lg:py-16">
+        <Reveal className="page-shell py-10 lg:py-16">
           <nav aria-label="Breadcrumb" className="mb-5">
             <ol className="flex flex-wrap items-center gap-1.5 text-[12.5px] text-muted">
               <li>
@@ -190,7 +191,7 @@ export default async function CategoryPage({
                   <Link
                     key={child.slug}
                     href={`/categories/${child.slug}`}
-                    className="pill transition-colors duration-200 hover:border-ink hover:text-ink"
+                    className="pill chip-interactive hover:border-ink hover:text-ink"
                   >
                     {child.name}
                   </Link>
@@ -198,12 +199,12 @@ export default async function CategoryPage({
               </div>
             </div>
           ) : null}
-        </div>
+        </Reveal>
       </div>
 
       <div className="page-shell py-10 lg:py-14">
         {count === 0 ? (
-          <div className="rounded-[12px] border border-dashed border-line-strong px-6 py-16 text-center">
+          <Reveal className="rounded-[12px] border border-dashed border-line-strong px-6 py-16 text-center">
             <p className="text-[17px] font-medium tracking-[-0.02em]">
               {searchCopy.emptyCategory.headline(category.name)}
             </p>
@@ -218,7 +219,7 @@ export default async function CategoryPage({
                 {home.open.cta}
               </Link>
             </div>
-          </div>
+          </Reveal>
         ) : (
           <div className="grid gap-14">
             {closingSoon.hits.length ? (
@@ -228,11 +229,11 @@ export default async function CategoryPage({
                 href={`/opportunities?c=${category.slug}&closing=30`}
                 linkLabel={home.closing.cta}
               >
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <Reveal variant="group" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {closingSoon.hits.map((hit) => (
                     <OpportunityCard key={hit.id} hit={hit} saved={savedIds.has(hit.id)} />
                   ))}
-                </div>
+                </Reveal>
               </Section>
             ) : null}
 
@@ -252,45 +253,45 @@ export default async function CategoryPage({
                 href={`/opportunities?c=${category.slug}&sort=largest`}
                 linkLabel="See the funding"
               >
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <Reveal variant="group" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {featured.hits.map((hit) => (
                     <OpportunityCard key={hit.id} hit={hit} saved={savedIds.has(hit.id)} />
                   ))}
-                </div>
+                </Reveal>
               </Section>
             ) : null}
           </div>
         )}
 
         {industriesInside.length ? (
-          <section className="mt-14 border-t border-line pt-10">
+          <Reveal as="section" className="mt-14 border-t border-line pt-10">
             <h2 className="display-md">Industries in this category</h2>
             <div className="mt-5 flex flex-wrap gap-1.5">
               {industriesInside.map((industry) => (
                 <Link
                   key={industry.slug}
                   href={`/opportunities?c=${category.slug}&c=${industry.slug}`}
-                  className="pill transition-colors duration-200 hover:border-ink hover:text-ink"
+                  className="pill chip-interactive hover:border-ink hover:text-ink"
                 >
                   {industry.name}
                   <span className="text-faint">{industry.count}</span>
                 </Link>
               ))}
             </div>
-          </section>
+          </Reveal>
         ) : null}
 
         {related.length ? (
           <section className="mt-14 border-t border-line pt-10">
-            <h2 className="display-md">Related categories</h2>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Reveal><h2 className="display-md">Related categories</h2></Reveal>
+            <Reveal variant="group" className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {related.map((item) => (
                 <Link
                   key={item.slug}
                   href={`/categories/${item.slug}`}
-                  className="group rounded-[10px] border border-line p-4 transition-[border-color,transform] duration-200 hover:-translate-y-[2px] hover:border-line-strong"
+                  className="category-card group rounded-[10px] border border-line p-4"
                 >
-                  <span className="grid size-8 place-items-center rounded-[7px] bg-subtle">
+                  <span className="grid size-8 place-items-center rounded-[7px] bg-subtle transition-colors duration-200 group-hover:bg-accent">
                     <Icon name={item.icon} className="size-4" />
                   </span>
                   <p className="mt-3 text-[14.5px] font-medium tracking-[-0.015em]">
@@ -298,7 +299,7 @@ export default async function CategoryPage({
                   </p>
                 </Link>
               ))}
-            </div>
+            </Reveal>
           </section>
         ) : null}
       </div>
@@ -321,7 +322,7 @@ function Section({
 }) {
   return (
     <section>
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+      <Reveal className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="display-md">{title}</h2>
           <p className="mt-1.5 text-[14px] text-muted">{description}</p>
@@ -329,7 +330,7 @@ function Section({
         <Link href={href} className="text-[14px] text-muted underline underline-offset-2 hover:text-ink">
           {linkLabel}
         </Link>
-      </div>
+      </Reveal>
       {children}
     </section>
   );

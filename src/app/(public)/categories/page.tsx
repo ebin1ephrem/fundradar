@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import type { CategoryType } from "@prisma/client";
+import { ArrowUpRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { search } from "@/lib/search";
 import { Icon } from "@/components/admin/icon";
 import { CATEGORY_TYPE_HINT, CATEGORY_TYPE_LABEL } from "@/lib/validation/category";
 import { brand, home, seo } from "@/content/copy";
+import { Reveal } from "@/components/public/motion";
 
 export const metadata: Metadata = {
   title: seo.categories.title,
@@ -54,7 +56,7 @@ export default async function CategoriesIndexPage() {
   return (
     <>
       <div className="border-b border-line">
-        <div className="page-shell py-12 lg:py-16">
+        <Reveal className="page-shell py-12 lg:py-16">
           <p className="eyebrow">{home.categories.eyebrow}</p>
           <h1 className="display-lg mt-3 max-w-[18ch]">
             {home.categories.headline}
@@ -62,7 +64,7 @@ export default async function CategoriesIndexPage() {
           <p className="lede mt-4 max-w-[58ch]">
             {home.categories.subline}
           </p>
-        </div>
+        </Reveal>
       </div>
 
       <div className="page-shell py-10 lg:py-14">
@@ -75,14 +77,14 @@ export default async function CategoriesIndexPage() {
 
             return (
               <section key={dimension}>
-                <div className="mb-6 max-w-[60ch]">
+                <Reveal className="mb-6 max-w-[60ch]">
                   <h2 className="display-md">{CATEGORY_TYPE_LABEL[dimension]}</h2>
                   <p className="mt-1.5 text-[14.5px] text-muted">
                     {CATEGORY_TYPE_HINT[dimension]}
                   </p>
-                </div>
+                </Reveal>
 
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                <Reveal variant="group" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                   {parents.map((parent) => {
                     const children = categories.filter((c) => c.parentId === parent.id);
                     const count = counts.get(parent.slug) ?? 0;
@@ -90,7 +92,7 @@ export default async function CategoriesIndexPage() {
                     return (
                       <div
                         key={parent.id}
-                        className="group rounded-[12px] border border-line p-5 transition-[border-color,transform] duration-200 hover:-translate-y-[2px] hover:border-line-strong"
+                        className="category-card group rounded-[12px] border border-line p-5"
                       >
                         <div className="flex items-start justify-between gap-3">
                           <span className="grid size-9 place-items-center rounded-[8px] bg-subtle transition-colors duration-200 group-hover:bg-accent">
@@ -101,8 +103,9 @@ export default async function CategoriesIndexPage() {
                           </span>
                         </div>
 
-                        <h3 className="mt-3.5 text-[16px] font-medium tracking-[-0.02em]">
+                        <h3 className="mt-3.5 flex items-start justify-between gap-3 text-[16px] font-medium tracking-[-0.02em]">
                           <Link href={`/categories/${parent.slug}`}>{parent.name}</Link>
+                          <ArrowUpRight className="motion-arrow mt-0.5 size-4 shrink-0 text-faint" strokeWidth={1.7} aria-hidden="true" />
                         </h3>
                         {parent.description ? (
                           <p className="mt-1.5 line-clamp-2 text-[13.5px] leading-relaxed text-muted">
@@ -116,7 +119,7 @@ export default async function CategoriesIndexPage() {
                               <Link
                                 key={child.slug}
                                 href={`/categories/${child.slug}`}
-                                className="rounded-[5px] border border-line px-1.5 py-0.5 text-[11.5px] text-muted transition-colors duration-200 hover:border-ink hover:text-ink"
+                                className="chip-interactive rounded-[5px] border border-line px-1.5 py-0.5 text-[11.5px] text-muted hover:border-ink hover:text-ink"
                               >
                                 {child.name}
                               </Link>
@@ -131,7 +134,7 @@ export default async function CategoriesIndexPage() {
                       </div>
                     );
                   })}
-                </div>
+                </Reveal>
               </section>
             );
           })}

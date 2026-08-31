@@ -5,6 +5,7 @@ import { cn, daysUntil, formatDate, fundingRangeLabel } from "@/lib/utils";
 import { CLOSING_SOON_DAYS, lifecycleStatus } from "@/lib/opportunity-status";
 import { SaveButton } from "@/components/lead/unlock";
 import { opportunity as oppCopy } from "@/content/copy";
+import { Reveal } from "@/components/public/motion/reveal";
 
 const NEW_FOR_DAYS = 14;
 
@@ -48,7 +49,7 @@ export function OpportunityCard({
   return (
     <article
       className={cn(
-        "group relative flex flex-col rounded-[12px] border border-line bg-canvas p-5 transition-[border-color,transform] duration-200 hover:-translate-y-[2px] hover:border-line-strong",
+        "opportunity-card group relative flex flex-col rounded-[12px] border border-line bg-canvas p-5",
         isClosed && "opacity-70",
       )}
     >
@@ -113,7 +114,7 @@ export function OpportunityCard({
       <span className="mt-4 inline-flex items-center gap-1 text-[13.5px] font-medium text-ink">
         {oppCopy.cta.details}
         <ArrowUpRight
-          className="size-3.5 transition-transform duration-200 group-hover:translate-x-[2px] group-hover:-translate-y-[2px]"
+          className="motion-arrow size-3.5"
           strokeWidth={1.8}
           aria-hidden="true"
         />
@@ -130,11 +131,11 @@ export function OpportunityGrid({
   savedIds?: Set<string>;
 }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <Reveal variant="group" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {hits.map((hit) => (
         <OpportunityCard key={hit.id} hit={hit} saved={savedIds?.has(hit.id)} />
       ))}
-    </div>
+    </Reveal>
   );
 }
 

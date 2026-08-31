@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { about, brand, home, seo } from "@/content/copy";
+import {
+  MaskedReveal,
+  ParallaxLayer,
+  Reveal,
+} from "@/components/public/motion";
 
 export const metadata: Metadata = {
   title: seo.about.title,
@@ -25,17 +30,17 @@ export default function AboutPage() {
           aria-hidden="true"
         />
         <div className="page-shell relative py-16 lg:py-24">
-          <p className="eyebrow">{brand.lockup}</p>
+          <Reveal as="p" className="eyebrow">{brand.lockup}</Reveal>
           <h1 className="display-xl mt-4 max-w-[20ch]">
-            {about.hero.headline}
+            <MaskedReveal delay={80}>{about.hero.headline}</MaskedReveal>
           </h1>
-          <div className="mt-6 grid max-w-[58ch] gap-4">
+          <Reveal className="mt-6 grid max-w-[58ch] gap-4" delay={180}>
             {about.hero.body.map((line) => (
               <p key={line} className="lede">
                 {line}
               </p>
             ))}
-          </div>
+          </Reveal>
         </div>
       </section>
 
@@ -46,12 +51,12 @@ export default function AboutPage() {
       {/* The promise -------------------------------------------------- */}
       <section className="section-y border-t border-line bg-subtle">
         <div className="page-shell">
-          <p className="eyebrow">{about.promise.eyebrow}</p>
-          <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <Reveal as="p" className="eyebrow">{about.promise.eyebrow}</Reveal>
+          <Reveal variant="group" className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-5" stagger={80}>
             {about.promise.items.map((item) => (
               <div
                 key={item.title}
-                className="rounded-[12px] border border-line bg-canvas p-5"
+                className="how-step rounded-[12px] border border-line bg-canvas p-5"
               >
                 <p className="text-[15.5px] font-medium tracking-[-0.02em]">
                   {item.title}
@@ -61,7 +66,7 @@ export default function AboutPage() {
                 </p>
               </div>
             ))}
-          </div>
+          </Reveal>
         </div>
       </section>
 
@@ -70,14 +75,16 @@ export default function AboutPage() {
       {/* How it works ------------------------------------------------- */}
       <section id="how-it-works" className="section-y border-t border-line">
         <div className="page-shell">
-          <p className="eyebrow">{home.howItWorks.eyebrow}</p>
-          <h2 className="display-lg mt-2.5 max-w-[16ch]">
-            {home.howItWorks.headline}
-          </h2>
-          <ol className="mt-9 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          <Reveal>
+            <p className="eyebrow">{home.howItWorks.eyebrow}</p>
+            <h2 className="display-lg mt-2.5 max-w-[16ch]">
+              {home.howItWorks.headline}
+            </h2>
+          </Reveal>
+          <Reveal as="ol" variant="group" stagger={80} className="mt-9 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
             {home.howItWorks.steps.map((step, i) => (
-              <li key={step.title} className="rounded-[12px] border border-line p-5">
-                <span className="font-display text-[13px] font-medium tabular-nums text-muted">
+              <li key={step.title} className="how-step rounded-[12px] border border-line p-5">
+                <span className="how-step-number font-display text-[13px] font-medium tabular-nums text-muted transition-colors duration-200">
                   {String(i + 1).padStart(2, "0")}
                 </span>
                 <p className="mt-3 text-[15.5px] font-medium tracking-[-0.02em]">
@@ -88,18 +95,15 @@ export default function AboutPage() {
                 </p>
               </li>
             ))}
-          </ol>
+          </Reveal>
         </div>
       </section>
 
       {/* Trust -------------------------------------------------------- */}
       <section className="pb-16">
         <div className="page-shell-wide">
-          <div className="on-dark panel-dark relative overflow-hidden px-6 py-14 lg:px-16 lg:py-20">
-            <div
-              className="dot-grid-dark pointer-events-none absolute inset-0 opacity-40"
-              aria-hidden="true"
-            />
+          <Reveal className="on-dark panel-dark relative overflow-hidden px-6 py-14 lg:px-16 lg:py-20">
+            <ParallaxLayer className="dot-grid-dark pointer-events-none absolute -inset-y-8 inset-x-0 opacity-40" distance={18} />
             <div className="relative max-w-[62ch]">
               <h2 className="display-lg max-w-[18ch] text-on-dark">
                 {about.trust.headline}
@@ -114,10 +118,10 @@ export default function AboutPage() {
               ))}
               <Link href="/opportunities" className="btn btn-accent mt-8">
                 {about.trust.cta}
-                <ArrowRight className="size-4" strokeWidth={1.8} />
+                <ArrowRight className="motion-arrow size-4" strokeWidth={1.8} />
               </Link>
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
     </>
@@ -139,7 +143,7 @@ function Prose({
     <section
       className={`section-y border-t border-line${tinted ? " bg-subtle" : ""}`}
     >
-      <div className="page-shell grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
+      <Reveal className="page-shell grid gap-8 lg:grid-cols-[0.85fr_1.15fr]">
         <div>
           <p className="eyebrow">{section.eyebrow}</p>
           <h2 className="display-md mt-2.5 max-w-[18ch]">{section.headline}</h2>
@@ -151,7 +155,7 @@ function Prose({
             </p>
           ))}
         </div>
-      </div>
+      </Reveal>
     </section>
   );
 }
