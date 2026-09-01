@@ -5,6 +5,10 @@ import { prisma } from "@/lib/prisma";
 import { PUBLIC_WORKFLOW_STATUSES } from "@/lib/visibility";
 import { PUBLIC_CACHE_SECONDS, PUBLIC_CATALOG_TAG } from "@/lib/cache-tags";
 import { parseQuery, type ParsedQuery } from "./query";
+import {
+  toCachedSearchHit,
+  type SearchDatabaseRow,
+} from "./cache-values";
 import type {
   OpportunityFilters,
   SearchHit,
@@ -51,7 +55,7 @@ const cachedSearch = unstable_cache(async (
   const parsed = parseQuery(filters.q);
   const rank = rankExpression(parsed);
 
-  const rows = await prisma.$queryRaw<RawRow[]>`
+  const rows = await prisma.$queryRaw<SearchDatabaseRow[]>`
       SELECT
         o.id, o.slug, o.title, o."providerName", o."providerLogoUrl",
         o."shortDescription", o."fundingMin", o."fundingMax", o.currency,
@@ -115,13 +119,6 @@ const cachedFacets = unstable_cache(async (
   revalidate: PUBLIC_CACHE_SECONDS,
   tags: [PUBLIC_CATALOG_TAG],
 });
-
-type RawRow = Omit<SearchHit, "categories" | "fundingMin" | "fundingMax"> & {
-  fundingMin: Prisma.Decimal | null;
-  fundingMax: Prisma.Decimal | null;
-  search_rank: number;
-  total_count: bigint;
-};
 
 async function buildWhere(filters: OpportunityFilters): Promise<Prisma.Sql> {
   const clauses: Prisma.Sql[] = [
@@ -321,7 +318,7 @@ function orderBy(
   }
 }
 
-async function attachCategories(rows: RawRow[]): Promise<SearchHit[]> {
+async function attachCategories(rows: SearchDatabaseRow[]): Promise<SearchHit[]> {
   if (rows.length === 0) return [];
 
   const links = await prisma.opportunityCategory.findMany({
@@ -346,10 +343,7 @@ async function attachCategories(rows: RawRow[]): Promise<SearchHit[]> {
     byOpportunity.set(link.opportunityId, list);
   }
 
-  return rows.map((row) => ({
-    ...row,
-    fundingMin: row.fundingMin?.toString() ?? null,
-    fundingMax: row.fundingMax?.toString() ?? null,
-    categories: byOpportunity.get(row.id) ?? [],
-  }));
+  return rows.map((row) =>
+    toCachedSearchHit(row, byOpportunity.get(row.id) ?? []),
+  );
 }

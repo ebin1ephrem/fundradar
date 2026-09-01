@@ -14,6 +14,7 @@
     "db:studio": "prisma studio",
     "smoke": "node tests/phase1.smoke.mjs && node tests/phase2.smoke.mjs && node tests/phase3.smoke.mjs && node tests/phase6.smoke.mjs && node tests/admin-ux.smoke.mjs",
     "check:search": "tsx --tsconfig tsconfig.scripts.json tests/search.check.ts",
+    "check:public-cache": "tsx --tsconfig tsconfig.scripts.json tests/public-cache.check.ts",
     "db:fixtures": "tsx prisma/dev-fixtures.ts",
     "smoke:public": "node tests/phase2.smoke.mjs",
     "smoke:leads": "node tests/phase3.smoke.mjs",
@@ -22,7 +23,7 @@
     "test:cleanup": "tsx --tsconfig tsconfig.scripts.json tests/cleanup.ts",
     "check:seed": "tsx --tsconfig tsconfig.scripts.json tests/seed.check.ts",
     "smoke:ingest": "node tests/phase4.smoke.mjs; npm run test:cleanup",
-    "check": "npm run check:search && npm run check:ingestion && npm run check:crawler && npm run check:seed",
+    "check": "npm run check:public-cache && npm run check:search && npm run check:ingestion && npm run check:crawler && npm run check:seed",
     "smoke:admin": "node tests/admin-ux.smoke.mjs"
   },
   "dependencies": {

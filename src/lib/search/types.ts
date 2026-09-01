@@ -59,15 +59,16 @@ export type SearchHit = {
   fundingAmountText: string | null;
   isEquityFree: boolean | null;
   fundingTypes: FundingType[];
-  applicationDeadline: Date | null;
+  /** ISO dates keep cached search results JSON-safe and stable across cache hits. */
+  applicationDeadline: string | null;
   isRollingDeadline: boolean;
-  applicationOpenDate: Date | null;
+  applicationOpenDate: string | null;
   lifecycleOverride: string | null;
   geographyScope: GeographyScope;
   country: string | null;
   state: string | null;
-  publishedAt: Date | null;
-  updatedAt: Date;
+  publishedAt: string | null;
+  updatedAt: string;
   viewCount: number;
   categories: { name: string; slug: string; categoryType: string; isPrimary: boolean }[];
 };

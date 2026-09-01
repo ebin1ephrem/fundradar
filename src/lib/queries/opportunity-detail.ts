@@ -26,7 +26,54 @@ const getCachedPublishedOpportunity = unstable_cache(async (slug: string) => {
   tags: [PUBLIC_CATALOG_TAG],
 });
 
-export const getPublishedOpportunity = cache(getCachedPublishedOpportunity);
+type CachedPublishedOpportunity = Awaited<
+  ReturnType<typeof getCachedPublishedOpportunity>
+>;
+
+const OPPORTUNITY_DATE_FIELDS = [
+  "applicationDeadline",
+  "applicationOpenDate",
+  "programmeStartDate",
+  "programmeEndDate",
+  "lastVerifiedAt",
+  "extractionDate",
+  "lastCheckedAt",
+  "contentLastUpdatedAt",
+  "approvedAt",
+  "publishedAt",
+  "createdAt",
+  "updatedAt",
+] as const;
+
+/** `unstable_cache` returns ISO strings for Prisma dates on a cache hit. */
+function rehydratePublishedOpportunity(
+  opportunity: CachedPublishedOpportunity,
+): CachedPublishedOpportunity {
+  if (!opportunity) return null;
+
+  const dates = Object.fromEntries(
+    OPPORTUNITY_DATE_FIELDS.map((field) => {
+      const value = opportunity[field] as Date | string | null;
+      return [field, value && !(value instanceof Date) ? new Date(value) : value];
+    }),
+  );
+
+  return {
+    ...opportunity,
+    ...dates,
+    categories: opportunity.categories.map((link) => ({
+      ...link,
+      createdAt:
+        link.createdAt instanceof Date
+          ? link.createdAt
+          : new Date(link.createdAt as unknown as string),
+    })),
+  } as CachedPublishedOpportunity;
+}
+
+export const getPublishedOpportunity = cache(async (slug: string) =>
+  rehydratePublishedOpportunity(await getCachedPublishedOpportunity(slug)),
+);
 
 export type PublishedOpportunity = NonNullable<
   Awaited<ReturnType<typeof getPublishedOpportunity>>

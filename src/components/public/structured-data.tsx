@@ -77,12 +77,12 @@ export function opportunityLd(
     providerName: string;
     officialSourceUrl: string;
     applicationUrl: string | null;
-    applicationDeadline: Date | null;
-    applicationOpenDate: Date | null;
+    applicationDeadline: Date | string | null;
+    applicationOpenDate: Date | string | null;
     fundingMin: string | null;
     fundingMax: string | null;
     currency: string;
-    updatedAt: Date;
+    updatedAt: Date | string;
   },
 ) {
   const amount =
@@ -109,18 +109,23 @@ export function opportunityLd(
     description: o.shortDescription,
     url: `${base}/opportunities/${o.slug}`,
     identifier: o.slug,
-    dateModified: o.updatedAt.toISOString(),
+    dateModified: isoDate(o.updatedAt),
     funder: { "@type": "Organization", name: o.providerName },
     ...(amount ? { amount } : {}),
     ...(o.applicationDeadline
-      ? { expires: o.applicationDeadline.toISOString() }
+      ? { expires: isoDate(o.applicationDeadline) }
       : {}),
     ...(o.applicationOpenDate
-      ? { startDate: o.applicationOpenDate.toISOString() }
+      ? { startDate: isoDate(o.applicationOpenDate) }
       : {}),
     ...(o.applicationUrl || o.officialSourceUrl
       ? { sameAs: o.applicationUrl ?? o.officialSourceUrl }
       : {}),
     provider: { "@type": "Organization", name: brand.lockup, url: base },
   };
+}
+
+function isoDate(value: Date | string): string | undefined {
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
 }
