@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SlidersHorizontal } from "lucide-react";
 import { search } from "@/lib/search";
 import { parseFilters, activeFilterCount, buildQuery, type RawParams } from "@/lib/search/params";
 import { filterCategories, statesWithOpportunities } from "@/lib/queries/public";
@@ -13,6 +12,8 @@ import { LeadGateSubject } from "@/components/lead/gate-context";
 import { savedOpportunityIds } from "@/lib/leads/identity";
 import { brand, search as searchCopy, seo } from "@/content/copy";
 import { Reveal } from "@/components/public/motion/reveal";
+import { MobileFilterDrawer } from "@/components/public/mobile-filter-drawer";
+import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: seo.opportunities.title,
@@ -60,6 +61,33 @@ export default async function OpportunitiesPage({
   const heading = filters.q
     ? `Results for “${filters.q}”`
     : "Open opportunities";
+  const clearFiltersHref = `${BASE}${buildQuery(
+    { q: params.q, sort: params.sort },
+    {},
+  )}`;
+  const quickFilters = [
+    {
+      label: "Closing Soon",
+      active: filters.closingWithinDays === 7,
+      href: `${BASE}${buildQuery(params, {
+        closing: filters.closingWithinDays === 7 ? undefined : "7",
+      })}`,
+    },
+    {
+      label: "Equity-free",
+      active: filters.equityFreeOnly,
+      href: `${BASE}${buildQuery(params, {
+        equityFree: filters.equityFreeOnly ? undefined : "1",
+      })}`,
+    },
+    {
+      label: "New",
+      active: params.sort === "newest",
+      href: `${BASE}${buildQuery(params, {
+        sort: params.sort === "newest" ? undefined : "newest",
+      })}`,
+    },
+  ];
 
   return (
     <>
@@ -75,8 +103,8 @@ export default async function OpportunitiesPage({
       />
 
       <div className="border-b border-line">
-        <Reveal className="page-shell py-10 lg:py-14">
-          <nav aria-label="Breadcrumb" className="mb-4">
+        <Reveal className="page-shell py-7 lg:py-14">
+          <nav aria-label="Breadcrumb" className="mb-3 lg:mb-4">
             <ol className="flex items-center gap-1.5 text-[12.5px] text-muted">
               <li>
                 <Link href="/" className="hover:text-ink">
@@ -95,52 +123,84 @@ export default async function OpportunitiesPage({
             each linking to the provider&apos;s own page.
           </p>
 
-          <div className="mt-7 max-w-[680px]">
+          <div className="mt-5 max-w-[680px] lg:mt-7">
             <SearchBar action={BASE} params={params} defaultValue={filters.q} />
+          </div>
+
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1 lg:hidden">
+            {quickFilters.map((quickFilter) => (
+              <Link
+                key={quickFilter.label}
+                href={quickFilter.href}
+                scroll={false}
+                aria-pressed={quickFilter.active}
+                className={cn(
+                  "inline-flex min-h-10 shrink-0 items-center rounded-[8px] border px-3.5 text-[13px] font-medium transition-colors duration-200",
+                  quickFilter.active
+                    ? "border-accent bg-accent text-ink"
+                    : "border-line bg-canvas text-muted hover:border-line-strong hover:text-ink",
+                )}
+              >
+                {quickFilter.label}
+              </Link>
+            ))}
           </div>
         </Reveal>
       </div>
 
-      <div className="page-shell py-8 lg:py-10">
+      <div className="page-shell py-5 lg:py-10">
+        <div className="mb-4 lg:hidden">
+          <div className="flex min-w-0 items-center gap-2">
+            <MobileFilterDrawer
+              activeCount={activeCount}
+              clearHref={clearFiltersHref}
+            >
+              <FilterPanel
+                basePath={BASE}
+                params={params}
+                categories={categories}
+                counts={counts}
+                states={states}
+                mode="drawer"
+              />
+            </MobileFilterDrawer>
+            <SortSelect
+              basePath={BASE}
+              value={filters.sort ?? (filters.q ? "relevance" : "newest")}
+              hasQuery={Boolean(filters.q)}
+              compact
+            />
+          </div>
+          <p className="mt-3 text-[13.5px] text-muted" aria-live="polite">
+            {results.total.toLocaleString("en-IN")} {results.total === 1 ? "opportunity" : "opportunities"}
+          </p>
+        </div>
+
         <div className="grid gap-9 lg:grid-cols-[248px_1fr]">
-          <Reveal as="aside" className="lg:sticky lg:top-[92px] lg:h-fit lg:max-h-[calc(100dvh-116px)] lg:overflow-y-auto lg:pr-1">
-            <details open className="lg:open">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-[8px] border border-line px-3.5 py-2.5 lg:hidden">
-                <span className="flex items-center gap-2 text-[14px] font-medium">
-                  <SlidersHorizontal className="size-4" strokeWidth={1.7} />
-                  Filters
-                </span>
-                {activeCount > 0 ? (
-                  <span className="pill pill-dark">{activeCount}</span>
-                ) : null}
-              </summary>
+          <Reveal as="aside" className="hidden lg:sticky lg:top-[92px] lg:block lg:h-fit lg:max-h-[calc(100dvh-116px)] lg:overflow-y-auto lg:pr-1">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-[14px] font-medium">Filters</h2>
+              {activeCount > 0 ? (
+                <Link
+                  href={clearFiltersHref}
+                  className="text-[12.5px] text-muted underline underline-offset-2 hover:text-ink"
+                >
+                  {searchCopy.filters.clear}
+                </Link>
+              ) : null}
+            </div>
 
-              <div className="mt-4 lg:mt-0">
-                <div className="mb-4 hidden items-center justify-between lg:flex">
-                  <h2 className="text-[14px] font-medium">Filters</h2>
-                  {activeCount > 0 ? (
-                    <Link
-                      href={`${BASE}${buildQuery({ q: params.q }, {})}`}
-                      className="text-[12.5px] text-muted underline underline-offset-2 hover:text-ink"
-                    >
-                      {searchCopy.filters.clear}
-                    </Link>
-                  ) : null}
-                </div>
-
-                <FilterPanel
-                  basePath={BASE}
-                  params={params}
-                  categories={categories}
-                  counts={counts}
-                  states={states}
-                />
-              </div>
-            </details>
+            <FilterPanel
+              basePath={BASE}
+              params={params}
+              categories={categories}
+              counts={counts}
+              states={states}
+            />
           </Reveal>
 
           <Reveal className="min-w-0" delay={90}>
-            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+            <div className="mb-5 hidden flex-wrap items-center justify-between gap-3 lg:flex">
               <p className="text-[13.5px] text-muted">
                 Showing{" "}
                 {results.total === 0

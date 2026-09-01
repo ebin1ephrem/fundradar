@@ -100,7 +100,7 @@ export function ReminderButton({ opportunityId }: { opportunityId: string }) {
           return requestReminderAction(data);
         })
       }
-      className="btn btn-secondary"
+      className="btn btn-secondary min-h-11 w-full"
     >
       <Bell className="size-4" strokeWidth={1.7} />
       {oppCopy.cta.remind}

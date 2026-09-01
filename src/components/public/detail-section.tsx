@@ -28,9 +28,9 @@ export function FactRow({
   value: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-line py-3 last:border-b-0">
-      <dt className="text-[13.5px] text-muted">{label}</dt>
-      <dd className="text-right text-[14.5px] font-medium tracking-[-0.01em]">
+    <div className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-5 gap-y-1 border-b border-line py-3 last:border-b-0 max-[340px]:grid-cols-1">
+      <dt className="min-w-0 text-[13.5px] text-muted">{label}</dt>
+      <dd className="min-w-0 text-right text-[14.5px] font-medium tracking-[-0.01em] [overflow-wrap:anywhere] max-[340px]:text-left">
         {value}
       </dd>
     </div>

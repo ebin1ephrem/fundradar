@@ -20,11 +20,13 @@ export function ShareButton({
   text,
   canonicalUrl,
   canonicalPath,
+  variant = "icon",
 }: {
   title: string;
   text: string;
   canonicalUrl: string;
   canonicalPath: string;
+  variant?: "icon" | "full";
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -73,9 +75,14 @@ export function ShareButton({
       type="button"
       onClick={shareOpportunity}
       aria-label={copied ? "Opportunity link copied" : "Share this opportunity"}
-      className="grid size-8 place-items-center self-center rounded-[6px] border border-line text-faint transition-colors duration-200 hover:border-line-strong hover:text-ink"
+      className={
+        variant === "full"
+          ? "btn btn-secondary min-h-11 w-full"
+          : "grid size-8 place-items-center self-center rounded-[6px] border border-line text-faint transition-colors duration-200 hover:border-line-strong hover:text-ink"
+      }
     >
       <Share2 className="size-4" strokeWidth={1.6} />
+      {variant === "full" ? (copied ? "Copied" : "Share") : null}
     </button>
   );
 }

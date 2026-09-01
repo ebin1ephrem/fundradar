@@ -41,12 +41,14 @@ export function FilterPanel({
   categories,
   counts,
   states,
+  mode = "desktop",
 }: {
   basePath: string;
   params: RawParams;
   categories: FilterCategory[];
   counts: Map<string, number>;
   states: string[];
+  mode?: "desktop" | "drawer";
 }) {
   const href = (changes: Record<string, string | string[] | undefined | null>) =>
     `${basePath}${buildQuery(params, changes)}`;
@@ -70,7 +72,12 @@ export function FilterPanel({
             : items;
 
         return (
-          <FilterGroup key={dimension} title={DIMENSION_TITLES[dimension]!}>
+          <FilterGroup
+            key={dimension}
+            title={DIMENSION_TITLES[dimension]!}
+            collapsible={mode === "drawer"}
+            selectedCount={chosen.length}
+          >
             {visible.map((item) => (
               <FilterCheck
                 key={item.slug}
@@ -92,7 +99,11 @@ export function FilterPanel({
         );
       })}
 
-      <FilterGroup title="Funding amount">
+      <FilterGroup
+        title="Funding amount"
+        collapsible={mode === "drawer"}
+        selectedCount={params.funding ? 1 : 0}
+      >
         {FUNDING_BANDS.map((band) => (
           <FilterCheck
             key={band.key}
@@ -106,7 +117,13 @@ export function FilterPanel({
         ))}
       </FilterGroup>
 
-      <FilterGroup title="Funding type">
+      <FilterGroup
+        title="Funding type"
+        collapsible={mode === "drawer"}
+        selectedCount={Object.values(FundingType).filter((type) =>
+          isSelected(params, "type", type),
+        ).length}
+      >
         {Object.values(FundingType)
           .filter((type) => type !== FundingType.SUBSIDY)
           .map((type) => (
@@ -119,7 +136,11 @@ export function FilterPanel({
           ))}
       </FilterGroup>
 
-      <FilterGroup title="Deadline">
+      <FilterGroup
+        title="Deadline"
+        collapsible={mode === "drawer"}
+        selectedCount={(params.closing ? 1 : 0) + (params.closed === "1" ? 1 : 0)}
+      >
         {DEADLINE_BANDS.map((band) => (
           <FilterCheck
             key={band.key}
@@ -138,7 +159,15 @@ export function FilterPanel({
         />
       </FilterGroup>
 
-      <FilterGroup title="Location">
+      <FilterGroup
+        title="Location"
+        collapsible={mode === "drawer"}
+        selectedCount={
+          Object.values(GeographyScope).filter((scope) =>
+            isSelected(params, "scope", scope),
+          ).length + (params.state ? 1 : 0)
+        }
+      >
         {Object.values(GeographyScope).map((scope) => (
           <FilterCheck
             key={scope}
@@ -158,11 +187,11 @@ export function FilterPanel({
                     ) : null,
                   ),
             )}
-            <label className="sr-only" htmlFor="state-filter">
+            <label className="sr-only" htmlFor={`state-filter-${mode}`}>
               State
             </label>
             <select
-              id="state-filter"
+              id={`state-filter-${mode}`}
               name="state"
               defaultValue={typeof params.state === "string" ? params.state : ""}
               className="field h-10 text-[13.5px]"
@@ -181,7 +210,13 @@ export function FilterPanel({
         ) : null}
       </FilterGroup>
 
-      <FilterGroup title="Provider">
+      <FilterGroup
+        title="Provider"
+        collapsible={mode === "drawer"}
+        selectedCount={Object.values(ProviderSector).filter((sector) =>
+          isSelected(params, "provider", sector),
+        ).length}
+      >
         {Object.values(ProviderSector).map((sector) => (
           <FilterCheck
             key={sector}
@@ -192,7 +227,14 @@ export function FilterPanel({
         ))}
       </FilterGroup>
 
-      <FilterGroup title="Other">
+      <FilterGroup
+        title="Other"
+        collapsible={mode === "drawer"}
+        selectedCount={
+          (params.equityFree === "1" ? 1 : 0) +
+          (params.registration === "1" ? 1 : 0)
+        }
+      >
         <FilterCheck
           label="Equity-free only"
           checked={params.equityFree === "1"}
@@ -213,10 +255,40 @@ export function FilterPanel({
 function FilterGroup({
   title,
   children,
+  collapsible = false,
+  selectedCount = 0,
 }: {
   title: string;
   children: React.ReactNode;
+  collapsible?: boolean;
+  selectedCount?: number;
 }) {
+  if (collapsible) {
+    return (
+      <details
+        open={selectedCount > 0}
+        className="group border-b border-line pb-1 last:border-b-0"
+      >
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 py-2 text-[14px] font-medium">
+          <span>{title}</span>
+          <span className="flex items-center gap-2">
+            <span className={cn("text-[12px] tabular-nums", selectedCount ? "text-ink" : "text-faint")}>
+              {selectedCount}
+            </span>
+            <svg
+              viewBox="0 0 16 16"
+              className="size-4 text-muted transition-transform duration-200 group-open:rotate-180"
+              aria-hidden="true"
+            >
+              <path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" />
+            </svg>
+          </span>
+        </summary>
+        <div className="grid gap-0.5 pb-4">{children}</div>
+      </details>
+    );
+  }
+
   return (
     <fieldset className="border-t border-line pt-5 first:border-t-0 first:pt-0">
       <legend className="eyebrow mb-2.5">{title}</legend>
@@ -273,7 +345,7 @@ function FilterCheck({
           )
         ) : null}
       </span>
-      <span className="min-w-0 flex-1 truncate">{label}</span>
+      <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{label}</span>
       {count !== undefined ? (
         <span className="shrink-0 text-[12px] text-faint tabular-nums">{count}</span>
       ) : null}

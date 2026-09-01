@@ -49,7 +49,7 @@ export function OpportunityCard({
   return (
     <article
       className={cn(
-        "opportunity-card group relative flex flex-col rounded-[12px] border border-line bg-canvas p-5",
+        "opportunity-card group relative min-w-0 flex flex-col rounded-[12px] border border-line bg-canvas p-4 sm:p-5",
         isClosed && "opacity-70",
       )}
     >
@@ -73,16 +73,18 @@ export function OpportunityCard({
           {hit.title}
         </Link>
       </h3>
-      <p className="mt-1 text-[13px] text-muted">{hit.providerName}</p>
+      <p className="mt-1 min-w-0 text-[13px] text-muted [overflow-wrap:anywhere]">
+        {hit.providerName}
+      </p>
 
       <p className="mt-3 line-clamp-2 text-[14px] leading-relaxed text-muted">
         {hit.shortDescription}
       </p>
 
       <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-line pt-4">
-        <div>
+        <div className="min-w-0">
           <dt className="text-[11px] tracking-[0.06em] text-faint uppercase">Funding</dt>
-          <dd className="mt-0.5 text-[14px] font-medium tracking-[-0.01em]">
+          <dd className="mt-0.5 text-[14px] font-medium tracking-[-0.01em] [overflow-wrap:anywhere]">
             {fundingRangeLabel(
               hit.fundingMin,
               hit.fundingMax,
@@ -91,9 +93,9 @@ export function OpportunityCard({
             )}
           </dd>
         </div>
-        <div>
+        <div className="min-w-0">
           <dt className="text-[11px] tracking-[0.06em] text-faint uppercase">Deadline</dt>
-          <dd className="mt-0.5 text-[14px] font-medium tracking-[-0.01em]">
+          <dd className="mt-0.5 text-[14px] font-medium tracking-[-0.01em] [overflow-wrap:anywhere]">
             {hit.isRollingDeadline ? "Rolling" : formatDate(hit.applicationDeadline)}
           </dd>
         </div>
@@ -101,13 +103,16 @@ export function OpportunityCard({
 
       <div className="mt-4 flex flex-wrap items-center gap-1.5">
         {shownCategories.map((category) => (
-          <span key={category.slug} className="pill">
+          <span
+            key={category.slug}
+            className="pill h-auto min-h-6 max-w-full whitespace-normal py-1 [overflow-wrap:anywhere]"
+          >
             {category.name}
           </span>
         ))}
-        <span className="pill">
-          <MapPin className="size-3" strokeWidth={1.7} aria-hidden="true" />
-          {location}
+        <span className="pill h-auto min-h-6 max-w-full items-start whitespace-normal py-1 [overflow-wrap:anywhere]">
+          <MapPin className="mt-0.5 size-3 shrink-0" strokeWidth={1.7} aria-hidden="true" />
+          <span className="min-w-0">{location}</span>
         </span>
       </div>
 

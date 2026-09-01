@@ -263,8 +263,8 @@ export default async function OpportunityPage({
               </div>
             </Reveal>
 
-            <Reveal as="aside" className="lg:sticky lg:top-[92px] lg:h-fit" delay={100}>
-              <div className="rounded-[12px] border border-line bg-canvas p-5 shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
+            <Reveal as="aside" className="min-w-0 lg:sticky lg:top-[92px] lg:h-fit" delay={100}>
+              <div className="min-w-0 rounded-[12px] border border-line bg-canvas p-5 shadow-[0_8px_24px_rgba(0,0,0,0.04)]">
                 <p className="eyebrow mb-2">At a glance</p>
                 <dl>
                   <FactRow
@@ -294,9 +294,9 @@ export default async function OpportunityPage({
                   <FactRow
                     label="Location"
                     value={
-                      <span className="inline-flex items-center gap-1.5">
-                        <MapPin className="size-3.5 text-faint" strokeWidth={1.7} />
-                        {location}
+                      <span className="inline-flex min-w-0 items-start justify-end gap-1.5 max-[340px]:justify-start">
+                        <MapPin className="mt-0.5 size-3.5 shrink-0 text-faint" strokeWidth={1.7} />
+                        <span className="min-w-0 [overflow-wrap:anywhere]">{location}</span>
                       </span>
                     }
                   />
@@ -318,19 +318,23 @@ export default async function OpportunityPage({
                       <ArrowUpRight className="motion-arrow size-4" strokeWidth={1.8} />
                     </ApplyLink>
                   ) : null}
-                  <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+                  <div className="grid gap-2">
                     <ReminderButton opportunityId={opportunity.id} />
-                    <SaveButton
-                      opportunityId={opportunity.id}
-                      title={opportunity.title}
-                      saved={Boolean(saved)}
-                    />
-                    <ShareButton
-                      title={opportunity.title}
-                      text={`${opportunity.title} — ${opportunity.providerName}`}
-                      canonicalUrl={canonicalUrl}
-                      canonicalPath={canonicalPath}
-                    />
+                    <div className="grid min-w-0 grid-cols-2 gap-2">
+                      <SaveButton
+                        opportunityId={opportunity.id}
+                        title={opportunity.title}
+                        saved={Boolean(saved)}
+                        variant="full"
+                      />
+                      <ShareButton
+                        title={opportunity.title}
+                        text={`${opportunity.title} — ${opportunity.providerName}`}
+                        canonicalUrl={canonicalUrl}
+                        canonicalPath={canonicalPath}
+                        variant="full"
+                      />
+                    </div>
                   </div>
                 </div>
 
