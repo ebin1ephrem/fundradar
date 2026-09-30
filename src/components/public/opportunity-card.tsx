@@ -11,10 +11,8 @@ const NEW_FOR_DAYS = 14;
 
 export function OpportunityCard({
   hit,
-  saved,
 }: {
   hit: SearchHit;
-  saved?: boolean;
 }) {
   const status = lifecycleStatus({
     applicationDeadline: hit.applicationDeadline,
@@ -65,7 +63,7 @@ export function OpportunityCard({
           {hit.isRollingDeadline ? <span className="pill">Rolling</span> : null}
           {hit.isEquityFree ? <span className="pill">Equity-free</span> : null}
         </div>
-        <SaveButton opportunityId={hit.id} title={hit.title} saved={saved} />
+        <SaveButton opportunityId={hit.id} title={hit.title} />
       </div>
 
       <h3 className="text-[17px] leading-[1.25] font-medium tracking-[-0.02em]">
@@ -130,15 +128,13 @@ export function OpportunityCard({
 
 export function OpportunityGrid({
   hits,
-  savedIds,
 }: {
   hits: SearchHit[];
-  savedIds?: Set<string>;
 }) {
   return (
     <Reveal variant="group" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {hits.map((hit) => (
-        <OpportunityCard key={hit.id} hit={hit} saved={savedIds?.has(hit.id)} />
+        <OpportunityCard key={hit.id} hit={hit} />
       ))}
     </Reveal>
   );

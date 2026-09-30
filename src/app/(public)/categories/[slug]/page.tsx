@@ -10,14 +10,19 @@ import { Icon } from "@/components/admin/icon";
 import { CATEGORY_TYPE_LABEL } from "@/lib/validation/category";
 import { LeadGateSubject } from "@/components/lead/gate-context";
 import { TrackView } from "@/components/lead/tracker";
-import { savedOpportunityIds } from "@/lib/leads/identity";
 import { brand, home, search as searchCopy, seo } from "@/content/copy";
 import { JsonLd, breadcrumbLd } from "@/components/public/structured-data";
 import { Reveal } from "@/components/public/motion/reveal";
 
 const SITE = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 900;
+
+// New category paths are rendered once on demand and then served from the
+// route cache. Admin mutations already invalidate the shared catalogue tags.
+export function generateStaticParams() {
+  return [];
+}
 
 const getCategory = cache(async (slug: string) =>
   prisma.category.findFirst({
@@ -92,10 +97,7 @@ export default async function CategoryPage({
   ]);
 
   const count = total.total;
-  const [industriesInside, savedIds] = await Promise.all([
-    industriesFor(category.slug),
-    savedOpportunityIds(),
-  ]);
+  const industriesInside = await industriesFor(category.slug);
 
   return (
     <>
@@ -231,7 +233,7 @@ export default async function CategoryPage({
               >
                 <Reveal variant="group" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {closingSoon.hits.map((hit) => (
-                    <OpportunityCard key={hit.id} hit={hit} saved={savedIds.has(hit.id)} />
+                    <OpportunityCard key={hit.id} hit={hit} />
                   ))}
                 </Reveal>
               </Section>
@@ -243,7 +245,7 @@ export default async function CategoryPage({
               href={`/opportunities?c=${category.slug}`}
               linkLabel={home.recent.cta}
             >
-              <OpportunityGrid hits={latest.hits} savedIds={savedIds} />
+              <OpportunityGrid hits={latest.hits} />
             </Section>
 
             {featured.hits.length > 1 ? (
@@ -255,7 +257,7 @@ export default async function CategoryPage({
               >
                 <Reveal variant="group" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {featured.hits.map((hit) => (
-                    <OpportunityCard key={hit.id} hit={hit} saved={savedIds.has(hit.id)} />
+                    <OpportunityCard key={hit.id} hit={hit} />
                   ))}
                 </Reveal>
               </Section>

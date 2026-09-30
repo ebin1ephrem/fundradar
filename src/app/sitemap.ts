@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 import { publiclyVisible } from "@/lib/visibility";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 900;
 
 /** Only published, active opportunities are listed — the same rule as every
  *  other public query, read from the one definition in lib/visibility. */

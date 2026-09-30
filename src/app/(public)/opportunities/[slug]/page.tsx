@@ -23,7 +23,6 @@ import { LeadGateSubject } from "@/components/lead/gate-context";
 import { TrackView } from "@/components/lead/tracker";
 import { getViewer } from "@/lib/leads/identity";
 import { resolveGate } from "@/lib/gating";
-import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
 import { brand, opportunity as oppCopy, seo } from "@/content/copy";
 import {
@@ -99,15 +98,6 @@ export default async function OpportunityPage({
   const similar = gate.isLocked("relatedOpportunities")
     ? []
     : await similarOpportunities(opportunity);
-
-  const saved = lead
-    ? await prisma.savedOpportunity.findUnique({
-        where: {
-          leadId_opportunityId: { leadId: lead.id, opportunityId: opportunity.id },
-        },
-        select: { id: true },
-      })
-    : null;
 
   const status = lifecycleStatus(opportunity);
   const isClosed = status === "CLOSED";
@@ -324,7 +314,6 @@ export default async function OpportunityPage({
                       <SaveButton
                         opportunityId={opportunity.id}
                         title={opportunity.title}
-                        saved={Boolean(saved)}
                         variant="full"
                       />
                       <ShareButton

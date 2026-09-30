@@ -225,7 +225,7 @@ async function currentLeadId(): Promise<string | null> {
 export async function toggleSaveAction(formData: FormData) {
   const leadId = await currentLeadId();
   const opportunityId = String(formData.get("opportunityId") ?? "");
-  if (!leadId || !opportunityId) return;
+  if (!leadId || !opportunityId) return { ok: false as const, saved: false };
 
   const existing = await prisma.savedOpportunity.findUnique({
     where: { leadId_opportunityId: { leadId, opportunityId } },
@@ -248,6 +248,7 @@ export async function toggleSaveAction(formData: FormData) {
   await refreshLead(leadId);
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/saved");
+  return { ok: true as const, saved: !existing };
 }
 
 export async function requestReminderAction(formData: FormData) {

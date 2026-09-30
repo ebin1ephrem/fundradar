@@ -15,7 +15,7 @@ function useGuarded(reason: string) {
 
   return {
     pending,
-    run: (action: () => Promise<void> | void) => {
+    run: (action: () => Promise<unknown> | void) => {
       const allowed = guard(reason, () => startTransition(() => void action()));
       if (!allowed) track({ type: "unlock_requested" });
     },
@@ -25,20 +25,22 @@ function useGuarded(reason: string) {
 export function SaveButton({
   opportunityId,
   title,
-  saved,
   variant = "icon",
 }: {
   opportunityId: string;
   title: string;
-  saved?: boolean;
   variant?: "icon" | "full";
 }) {
+  const { isSaved, setSaved } = useLeadGate();
+  const saved = isSaved(opportunityId);
   const { pending, run } = useGuarded("save_opportunity");
 
   const submit = () => {
     const data = new FormData();
     data.set("opportunityId", opportunityId);
-    return toggleSaveAction(data);
+    return toggleSaveAction(data).then((result) => {
+      if (result?.ok) setSaved(opportunityId, result.saved);
+    });
   };
 
   if (variant === "full") {

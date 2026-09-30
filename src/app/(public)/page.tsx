@@ -6,7 +6,6 @@ import { homepageCategories, publicProviderCount } from "@/lib/queries/public";
 import { OpportunityCard } from "@/components/public/opportunity-card";
 import { SearchBar } from "@/components/public/search-bar";
 import { Icon } from "@/components/admin/icon";
-import { savedOpportunityIds } from "@/lib/leads/identity";
 import { brand, home, search as searchCopy, seo, weeklySignal } from "@/content/copy";
 import { JsonLd, organisationLd, websiteLd } from "@/components/public/structured-data";
 import {
@@ -33,7 +32,7 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 900;
 
 export default async function HomePage() {
   const [categories, totals, closingSoon, recent, equityFree, largest] =
@@ -53,7 +52,6 @@ export default async function HomePage() {
   );
   const providerCount = await publicProviderCount();
 
-  const savedIds = await savedOpportunityIds();
   const total = totals.total;
 
   return (
@@ -174,7 +172,7 @@ export default async function HomePage() {
             />
             <Reveal variant="group" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {closingSoon.hits.map((hit) => (
-                <OpportunityCard key={hit.id} hit={hit} saved={savedIds.has(hit.id)} />
+                <OpportunityCard key={hit.id} hit={hit} />
               ))}
             </Reveal>
           </div>
@@ -258,7 +256,7 @@ export default async function HomePage() {
             />
             <Reveal variant="group" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {recent.hits.map((hit) => (
-                <OpportunityCard key={hit.id} hit={hit} saved={savedIds.has(hit.id)} />
+                <OpportunityCard key={hit.id} hit={hit} />
               ))}
             </Reveal>
           </div>

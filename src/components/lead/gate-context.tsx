@@ -21,6 +21,7 @@ export type GateSubject = {
 
 type GateValue = {
   identified: boolean;
+  name: string | null;
   subject: GateSubject;
   isOpen: boolean;
   /** The action the visitor was trying to take, used as the capture source. */
@@ -28,6 +29,9 @@ type GateValue = {
   setSubject: (subject: GateSubject) => void;
   open: (reason: string) => void;
   close: () => void;
+  refreshSession: () => Promise<void>;
+  isSaved: (opportunityId: string) => boolean;
+  setSaved: (opportunityId: string, saved: boolean) => void;
   /**
    * Runs `action` when the visitor is already known, and opens the popup when
    * they are not. Every gated control goes through this.
@@ -40,19 +44,59 @@ const Ctx = createContext<GateValue | null>(null);
 const VIEW_KEY = "fr_views";
 
 export function LeadGateProvider({
-  identified,
   enabled,
   viewsBeforePrompt,
   children,
 }: {
-  identified: boolean;
   enabled: boolean;
   viewsBeforePrompt: number;
   children: React.ReactNode;
 }) {
+  const [identified, setIdentified] = useState(false);
+  const [name, setName] = useState<string | null>(null);
+  const [savedIds, setSavedIds] = useState<Set<string>>(() => new Set());
   const [isOpen, setIsOpen] = useState(false);
   const [reason, setReason] = useState<string | null>(null);
   const [subject, setSubject] = useState<GateSubject>({ kind: "general" });
+
+  const refreshSession = useCallback(async () => {
+    try {
+      const response = await fetch("/api/session", {
+        cache: "no-store",
+        credentials: "same-origin",
+      });
+      if (!response.ok) return;
+      const session = (await response.json()) as {
+        identified: boolean;
+        name: string | null;
+        savedOpportunityIds: string[];
+      };
+      setIdentified(session.identified);
+      setName(session.name);
+      setSavedIds(new Set(session.savedOpportunityIds));
+    } catch {
+      // Personalisation is progressive enhancement. Shared catalogue HTML
+      // remains usable when the session endpoint is unavailable.
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshSession();
+  }, [refreshSession]);
+
+  const isSaved = useCallback(
+    (opportunityId: string) => savedIds.has(opportunityId),
+    [savedIds],
+  );
+
+  const setSaved = useCallback((opportunityId: string, saved: boolean) => {
+    setSavedIds((current) => {
+      const next = new Set(current);
+      if (saved) next.add(opportunityId);
+      else next.delete(opportunityId);
+      return next;
+    });
+  }, []);
 
   const open = useCallback(
     (nextReason: string) => {
@@ -109,15 +153,31 @@ export function LeadGateProvider({
   const value = useMemo<GateValue>(
     () => ({
       identified,
+      name,
       subject,
       isOpen,
       reason,
       setSubject,
       open,
       close,
+      refreshSession,
+      isSaved,
+      setSaved,
       guard,
     }),
-    [identified, subject, isOpen, reason, open, close, guard],
+    [
+      identified,
+      name,
+      subject,
+      isOpen,
+      reason,
+      open,
+      close,
+      refreshSession,
+      isSaved,
+      setSaved,
+      guard,
+    ],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

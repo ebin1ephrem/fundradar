@@ -313,6 +313,7 @@ function FilterCheck({
   return (
     <Link
       href={href}
+      rel="nofollow"
       scroll={false}
       aria-pressed={checked}
       className={cn(

@@ -5,6 +5,12 @@ import {
   toCachedSearchHit,
   type SearchDatabaseRow,
 } from "../src/lib/search/cache-values";
+import {
+  buildQuery,
+  MAX_CATALOGUE_PAGE,
+  normalizeParams,
+  parseFilters,
+} from "../src/lib/search/params";
 
 const row: SearchDatabaseRow = {
   id: "opp-1",
@@ -59,5 +65,18 @@ assert.equal(structured.dateModified, "2026-09-01T00:00:00.000Z");
 assert.equal(structured.expires, "2026-12-31T00:00:00.000Z");
 assert.equal(structured.startDate, "2026-09-01T00:00:00.000Z");
 assert.doesNotThrow(() => JSON.stringify(structured));
+
+const noisyParams = normalizeParams({
+  ignored: "crawler-noise",
+  q: "x".repeat(200),
+  c: ["women", "grants", "women", "climate", "seed", "debt", "export", "extra"],
+  page: "999999",
+});
+assert.equal(noisyParams.ignored, undefined);
+assert.equal(String(noisyParams.q).length, 120);
+assert.deepEqual(noisyParams.c, ["climate", "debt", "export", "extra", "grants", "seed"]);
+assert.equal(parseFilters(noisyParams).page, MAX_CATALOGUE_PAGE);
+assert.equal(buildQuery({ z: "noise", c: ["women", "grants", "women"] }, {}), "?c=grants&c=women");
+assert.equal(buildQuery({ q: "grants, women" }, {}), "?q=grants%2C+women");
 
 console.log("Public cache serialization checks passed.");

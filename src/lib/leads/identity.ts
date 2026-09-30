@@ -7,6 +7,7 @@ import { hashToken, newToken } from "@/lib/auth/tokens";
 import { LEAD_COOKIE, VISITOR_COOKIE } from "@/lib/auth/cookie-names";
 
 const LEAD_SESSION_DAYS = 180;
+const VISITOR_MAX_AGE = 60 * 60 * 24 * 365;
 
 export type Viewer = {
   visitorId: string | null;
@@ -16,8 +17,8 @@ export type Viewer = {
 
 /**
  * Resolves who is browsing, without ever forcing anyone to identify themselves.
- * The anonymous id is minted by middleware on the first request; the Visitor row
- * is only written once there is something to record about them.
+ * The anonymous id and Visitor row are both created lazily by the tracking
+ * endpoint, never during a public page render.
  */
 export const getViewer = cache(async (): Promise<Viewer> => {
   const store = await cookies();
@@ -54,8 +55,17 @@ export async function ensureVisitor(attribution?: {
   utm?: Record<string, string | null>;
 }): Promise<Visitor | null> {
   const store = await cookies();
-  const anonId = store.get(VISITOR_COOKIE)?.value;
-  if (!anonId) return null;
+  let anonId = store.get(VISITOR_COOKIE)?.value;
+  if (!anonId) {
+    anonId = crypto.randomUUID();
+    store.set(VISITOR_COOKIE, anonId, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: VISITOR_MAX_AGE,
+    });
+  }
 
   const hdrs = await headers();
   const now = new Date();
@@ -140,15 +150,4 @@ export async function requireLead(): Promise<Lead> {
   const { lead } = await getViewer();
   if (!lead) throw new Error("Not identified");
   return lead;
-}
-
-/** Which opportunities the current viewer has saved, for card state. */
-export async function savedOpportunityIds(): Promise<Set<string>> {
-  const { lead } = await getViewer();
-  if (!lead) return new Set();
-  const rows = await prisma.savedOpportunity.findMany({
-    where: { leadId: lead.id },
-    select: { opportunityId: true },
-  });
-  return new Set(rows.map((r) => r.opportunityId));
 }
