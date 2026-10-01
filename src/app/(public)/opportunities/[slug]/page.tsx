@@ -39,6 +39,15 @@ const SITE = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 // for every crawler hit.
 export const revalidate = 900;
 
+/**
+ * Opt this dynamic segment into on-demand ISR. Returning no paths avoids a
+ * database-wide slug read during every build; the first request for each slug
+ * generates the shared page and subsequent requests are served from the CDN.
+ */
+export async function generateStaticParams(): Promise<Array<{ slug: string }>> {
+  return [];
+}
+
 export async function generateMetadata({
   params,
 }: {

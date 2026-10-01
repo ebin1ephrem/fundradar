@@ -89,6 +89,7 @@ const detailSource = readFileSync(
 );
 assert.doesNotMatch(detailSource, /force-dynamic|getViewer|cookies\(/);
 assert.match(detailSource, /export const revalidate = 900/);
+assert.match(detailSource, /export async function generateStaticParams/);
 
 const gateSource = readFileSync("src/components/lead/gate-context.tsx", "utf8");
 assert.match(gateSource, /fr:session-checked:v1/);
