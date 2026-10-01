@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { SiteHeader } from "@/components/public/site-header";
 import { SiteFooter } from "@/components/public/site-footer";
 import { LeadGateProvider } from "@/components/lead/gate-context";
@@ -17,7 +18,16 @@ export default async function PublicLayout({
       viewsBeforePrompt={gate.opportunityViewsBeforePrompt}
     >
       <div className="flex min-h-dvh flex-col">
-        <SiteHeader />
+        <Suspense
+          fallback={
+            <div
+              className="h-[66px] border-b border-line lg:h-[74px]"
+              aria-hidden="true"
+            />
+          }
+        >
+          <SiteHeader />
+        </Suspense>
         <main className="flex-1">{children}</main>
         <SiteFooter />
       </div>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import { search } from "@/lib/search";
 import { parseFilters, activeFilterCount, buildQuery, normalizeParams, type RawParams } from "@/lib/search/params";
 import { filterCategories, statesWithOpportunities } from "@/lib/queries/public";
@@ -177,12 +178,14 @@ export default async function OpportunitiesPage({
                 mode="drawer"
               />
             </MobileFilterDrawer>
-            <SortSelect
-              basePath={BASE}
-              value={filters.sort ?? (filters.q ? "relevance" : "newest")}
-              hasQuery={Boolean(filters.q)}
-              compact
-            />
+            <Suspense fallback={<SortSelectFallback compact />}>
+              <SortSelect
+                basePath={BASE}
+                value={filters.sort ?? (filters.q ? "relevance" : "newest")}
+                hasQuery={Boolean(filters.q)}
+                compact
+              />
+            </Suspense>
           </div>
           <p className="mt-3 text-[13.5px] text-muted" aria-live="polite">
             {results.total.toLocaleString("en-IN")} {results.total === 1 ? "opportunity" : "opportunities"}
@@ -225,11 +228,13 @@ export default async function OpportunitiesPage({
                     )}`}{" "}
                 of {results.total.toLocaleString("en-IN")}
               </p>
-              <SortSelect
-                basePath={BASE}
-                value={filters.sort ?? (filters.q ? "relevance" : "newest")}
-                hasQuery={Boolean(filters.q)}
-              />
+              <Suspense fallback={<SortSelectFallback />}>
+                <SortSelect
+                  basePath={BASE}
+                  value={filters.sort ?? (filters.q ? "relevance" : "newest")}
+                  hasQuery={Boolean(filters.q)}
+                />
+              </Suspense>
             </div>
 
             {results.hits.length === 0 ? (
@@ -252,6 +257,18 @@ export default async function OpportunitiesPage({
         </div>
       </div>
     </>
+  );
+}
+
+function SortSelectFallback({ compact = false }: { compact?: boolean }) {
+  return (
+    <div
+      className={cn(
+        "field animate-pulse bg-surface-muted",
+        compact ? "h-11 w-28" : "h-9 w-32",
+      )}
+      aria-hidden="true"
+    />
   );
 }
 
