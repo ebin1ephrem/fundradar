@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { Prisma } from "@prisma/client";
 import { opportunityLd } from "../src/components/public/structured-data";
 import {
@@ -78,5 +79,19 @@ assert.deepEqual(noisyParams.c, ["climate", "debt", "export", "extra", "grants",
 assert.equal(parseFilters(noisyParams).page, MAX_CATALOGUE_PAGE);
 assert.equal(buildQuery({ z: "noise", c: ["women", "grants", "women"] }, {}), "?c=grants&c=women");
 assert.equal(buildQuery({ q: "grants, women" }, {}), "?q=grants%2C+women");
+
+const middlewareSource = readFileSync("src/middleware.ts", "utf8");
+assert.match(middlewareSource, /matcher:\s*\["\/admin\/:path\*"\]/);
+
+const detailSource = readFileSync(
+  "src/app/(public)/opportunities/[slug]/page.tsx",
+  "utf8",
+);
+assert.doesNotMatch(detailSource, /force-dynamic|getViewer|cookies\(/);
+assert.match(detailSource, /export const revalidate = 900/);
+
+const gateSource = readFileSync("src/components/lead/gate-context.tsx", "utf8");
+assert.match(gateSource, /fr:session-checked:v1/);
+assert.match(gateSource, /if \(!hasLeadHint\(\)\)/);
 
 console.log("Public cache serialization checks passed.");

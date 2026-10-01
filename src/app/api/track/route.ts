@@ -35,13 +35,18 @@ export async function POST(request: Request) {
   const contentLength = Number(request.headers.get("content-length") ?? 0);
   const fetchSite = request.headers.get("sec-fetch-site");
   const origin = request.headers.get("origin");
+  const userAgent = request.headers.get("user-agent") ?? "";
   const requestOrigin = new URL(request.url).origin;
+  const looksAutomated = /bot|crawler|spider|slurp|headless|lighthouse|preview|scrap|python|curl|wget/i.test(
+    userAgent,
+  );
 
   if (
     !contentType.toLowerCase().startsWith("application/json") ||
     contentLength > 16_384 ||
-    fetchSite === "cross-site" ||
-    (origin !== null && origin !== requestOrigin)
+    fetchSite !== "same-origin" ||
+    origin !== requestOrigin ||
+    looksAutomated
   ) {
     return NextResponse.json(
       { ok: false },

@@ -42,6 +42,14 @@ type GateValue = {
 const Ctx = createContext<GateValue | null>(null);
 
 const VIEW_KEY = "fr_views";
+const LEAD_HINT = "fr_identified=1";
+const SESSION_CHECK_KEY = "fr:session-checked:v1";
+
+function hasLeadHint(): boolean {
+  return typeof document !== "undefined" && document.cookie
+    .split(";")
+    .some((cookie) => cookie.trim() === LEAD_HINT);
+}
 
 export function LeadGateProvider({
   enabled,
@@ -60,6 +68,17 @@ export function LeadGateProvider({
   const [subject, setSubject] = useState<GateSubject>({ kind: "general" });
 
   const refreshSession = useCallback(async () => {
+    // Almost all public visitors are anonymous. Avoid turning each CDN-served
+    // page into a serverless invocation just to rediscover that fact. Browsers
+    // that pre-date the hint cookie get one compatibility lookup, ever.
+    if (!hasLeadHint()) {
+      try {
+        if (localStorage.getItem(SESSION_CHECK_KEY)) return;
+        localStorage.setItem(SESSION_CHECK_KEY, "1");
+      } catch {
+        return;
+      }
+    }
     try {
       const response = await fetch("/api/session", {
         cache: "no-store",
@@ -74,6 +93,9 @@ export function LeadGateProvider({
       setIdentified(session.identified);
       setName(session.name);
       setSavedIds(new Set(session.savedOpportunityIds));
+      if (!session.identified) {
+        document.cookie = "fr_identified=; Max-Age=0; Path=/; SameSite=Lax";
+      }
     } catch {
       // Personalisation is progressive enhancement. Shared catalogue HTML
       // remains usable when the session endpoint is unavailable.

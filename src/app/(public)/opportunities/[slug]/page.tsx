@@ -20,8 +20,8 @@ import {
   SaveButton,
 } from "@/components/lead/unlock";
 import { LeadGateSubject } from "@/components/lead/gate-context";
+import { GatedContent } from "@/components/lead/gated-content";
 import { TrackView } from "@/components/lead/tracker";
-import { getViewer } from "@/lib/leads/identity";
 import { resolveGate } from "@/lib/gating";
 import { cn } from "@/lib/utils";
 import { brand, opportunity as oppCopy, seo } from "@/content/copy";
@@ -34,9 +34,10 @@ import { Reveal } from "@/components/public/motion/reveal";
 
 const SITE = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
-// Deliberately dynamic: a cached page showing "3 days left" when the deadline
-// has passed is exactly the failure that loses a funding directory its users.
-export const dynamic = "force-dynamic";
+// Deadline labels may be at most 15 minutes old. That small tradeoff keeps the
+// highest-cardinality public route on the CDN instead of invoking a function
+// for every crawler hit.
+export const revalidate = 900;
 
 export async function generateMetadata({
   params,
@@ -93,11 +94,11 @@ export default async function OpportunityPage({
   const canonicalPath = `/opportunities/${opportunity.slug}`;
   const canonicalUrl = new URL(canonicalPath, SITE).toString();
 
-  const { lead } = await getViewer();
-  const gate = await resolveGate(Boolean(lead));
-  const similar = gate.isLocked("relatedOpportunities")
-    ? []
-    : await similarOpportunities(opportunity);
+  // The server always builds one shared public representation. Identified
+  // visitors reveal gated sections client-side after the lightweight session
+  // check, so cookies never make this page dynamic.
+  const gate = await resolveGate(false);
+  const similar = await similarOpportunities(opportunity);
 
   const status = lifecycleStatus(opportunity);
   const isClosed = status === "CLOSED";
@@ -299,14 +300,16 @@ export default async function OpportunityPage({
                 </dl>
 
                 <div className="mt-5 grid gap-2">
-                  {opportunity.applicationUrl && !gate.isLocked("applicationUrl") ? (
-                    <ApplyLink
-                      opportunityId={opportunity.id}
-                      href={opportunity.applicationUrl}
-                    >
-                      {oppCopy.cta.apply}
-                      <ArrowUpRight className="motion-arrow size-4" strokeWidth={1.8} />
-                    </ApplyLink>
+                  {opportunity.applicationUrl ? (
+                    <GatedContent locked={gate.isLocked("applicationUrl")}>
+                      <ApplyLink
+                        opportunityId={opportunity.id}
+                        href={opportunity.applicationUrl}
+                      >
+                        {oppCopy.cta.apply}
+                        <ArrowUpRight className="motion-arrow size-4" strokeWidth={1.8} />
+                      </ApplyLink>
+                    </GatedContent>
                   ) : null}
                   <div className="grid gap-2">
                     <ReminderButton opportunityId={opportunity.id} />
@@ -339,19 +342,22 @@ export default async function OpportunityPage({
 
       <div className="page-shell py-10 lg:py-14">
         <div className="grid max-w-[760px] gap-8">
-          {gate.isLocked("fullDescription") ? (
-            <LockedSection
+          <GatedContent
+            locked={gate.isLocked("fullDescription")}
+            fallback={<LockedSection
               title={oppCopy.sections.overview}
               teaser="Read the full programme description"
               reason="view_full_details"
               cta={oppCopy.sectionCta.fullView}
               supportingCopy={oppCopy.sectionPrompt.fullView}
-            />
-          ) : opportunity.fullDescription ? (
+            />}
+          >
+          {opportunity.fullDescription ? (
             <DetailSection id="overview" title={oppCopy.sections.overview}>
               <ProviderText text={opportunity.fullDescription} />
             </DetailSection>
           ) : null}
+          </GatedContent>
 
           <DetailSection id="funding" title={oppCopy.sections.funding}>
             <dl className="rounded-[12px] border border-line px-5 py-1">
@@ -386,15 +392,16 @@ export default async function OpportunityPage({
             </dl>
           </DetailSection>
 
-          {gate.isLocked("eligibility") ? (
-            <LockedSection
+          <GatedContent
+            locked={gate.isLocked("eligibility")}
+            fallback={<LockedSection
               title={oppCopy.sections.eligibility}
               teaser="See the full eligibility criteria"
               reason="view_eligibility"
               cta={oppCopy.sectionCta.eligibility}
               supportingCopy={oppCopy.sectionPrompt.eligibility}
-            />
-          ) : (
+            />}
+          >
             <DetailSection id="eligibility" title={oppCopy.sections.eligibility}>
               <ProviderText text={opportunity.eligibilitySummary} />
               {eligibilityFlags.length ? (
@@ -423,7 +430,7 @@ export default async function OpportunityPage({
                 </div>
               ) : null}
             </DetailSection>
-          )}
+          </GatedContent>
 
           <DetailSection id="who-can-apply" title={oppCopy.sections.whoCanApply}>
             <dl className="rounded-[12px] border border-line px-5 py-1">
@@ -458,15 +465,17 @@ export default async function OpportunityPage({
             ) : null}
           </DetailSection>
 
-          {gate.isLocked("benefits") ? (
-            <LockedSection
+          <GatedContent
+            locked={gate.isLocked("benefits")}
+            fallback={<LockedSection
               title={oppCopy.sections.benefits}
               teaser="See everything the programme offers"
               reason="view_benefits"
               cta={oppCopy.sectionCta.benefits}
               supportingCopy={oppCopy.sectionPrompt.benefits}
-            />
-          ) : benefits.length || opportunity.benefitsSummary ? (
+            />}
+          >
+          {benefits.length || opportunity.benefitsSummary ? (
             <DetailSection id="benefits" title={oppCopy.sections.benefits}>
               <ProviderText text={opportunity.benefitsSummary} />
               {benefits.length ? (
@@ -481,42 +490,51 @@ export default async function OpportunityPage({
               ) : null}
             </DetailSection>
           ) : null}
+          </GatedContent>
 
-          {gate.isLocked("applicationProcess") ? (
-            <LockedSection
+          <GatedContent
+            locked={gate.isLocked("applicationProcess")}
+            fallback={<LockedSection
               title={oppCopy.sections.applicationProcess}
               teaser="See how to apply, step by step"
               reason="view_application_details"
               cta={oppCopy.sectionCta.application}
               supportingCopy={oppCopy.sectionPrompt.application}
-            />
-          ) : opportunity.applicationProcess || opportunity.applicationInstructions ? (
+            />}
+          >
+          {opportunity.applicationProcess || opportunity.applicationInstructions ? (
             <DetailSection id="application-process" title={oppCopy.sections.applicationProcess}>
               <ProviderText
                 text={opportunity.applicationProcess ?? opportunity.applicationInstructions}
               />
             </DetailSection>
           ) : null}
+          </GatedContent>
 
-          {gate.isLocked("requiredDocuments") ? (
-            <LockedSection
+          <GatedContent
+            locked={gate.isLocked("requiredDocuments")}
+            fallback={<LockedSection
               title={oppCopy.sections.documents}
               teaser="See what you need to prepare"
               reason="view_documents"
               cta={oppCopy.sectionCta.documents}
               supportingCopy={oppCopy.sectionPrompt.documents}
-            />
-          ) : opportunity.requiredDocuments ? (
+            />}
+          >
+          {opportunity.requiredDocuments ? (
             <DetailSection id="required-documents" title={oppCopy.sections.documents}>
               <ProviderText text={opportunity.requiredDocuments} />
             </DetailSection>
           ) : null}
+          </GatedContent>
 
-          {gate.isLocked("selectionProcess") ? null : opportunity.selectionProcess ? (
+          <GatedContent locked={gate.isLocked("selectionProcess")}>
+          {opportunity.selectionProcess ? (
             <DetailSection id="selection-process" title={oppCopy.sections.selection}>
               <ProviderText text={opportunity.selectionProcess} />
             </DetailSection>
           ) : null}
+          </GatedContent>
 
           <DetailSection id="important-dates" title={oppCopy.sections.dates}>
             <dl className="rounded-[12px] border border-line px-5 py-1">
@@ -545,11 +563,13 @@ export default async function OpportunityPage({
             </dl>
           </DetailSection>
 
-          {gate.isLocked("importantNotes") ? null : opportunity.importantNotes ? (
+          <GatedContent locked={gate.isLocked("importantNotes")}>
+          {opportunity.importantNotes ? (
             <DetailSection id="notes" title="Important notes">
               <ProviderText text={opportunity.importantNotes} />
             </DetailSection>
           ) : null}
+          </GatedContent>
 
           <DetailSection id="source" title={oppCopy.sections.source}>
             <div className="rounded-[12px] border border-line p-5">
@@ -594,6 +614,7 @@ export default async function OpportunityPage({
           </DetailSection>
         </div>
 
+        <GatedContent locked={gate.isLocked("relatedOpportunities")}>
         {similar.length ? (
           <section className="mt-14 border-t border-line pt-10">
             <Reveal className="mb-6 flex flex-wrap items-end justify-between gap-3">
@@ -619,6 +640,7 @@ export default async function OpportunityPage({
             </Reveal>
           </section>
         ) : null}
+        </GatedContent>
       </div>
     </>
   );

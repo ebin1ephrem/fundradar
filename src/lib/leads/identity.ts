@@ -4,7 +4,11 @@ import { cache } from "react";
 import type { Lead, Visitor } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { hashToken, newToken } from "@/lib/auth/tokens";
-import { LEAD_COOKIE, VISITOR_COOKIE } from "@/lib/auth/cookie-names";
+import {
+  LEAD_COOKIE,
+  LEAD_HINT_COOKIE,
+  VISITOR_COOKIE,
+} from "@/lib/auth/cookie-names";
 
 const LEAD_SESSION_DAYS = 180;
 const VISITOR_MAX_AGE = 60 * 60 * 24 * 365;
@@ -111,6 +115,15 @@ export async function startLeadSession(leadId: string): Promise<void> {
     path: "/",
     expires: expiresAt,
   });
+  // This is deliberately not an authentication cookie. It lets the public
+  // client avoid a serverless `/api/session` call for every anonymous visit.
+  store.set(LEAD_HINT_COOKIE, "1", {
+    httpOnly: false,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    expires: expiresAt,
+  });
 }
 
 export async function endLeadSession(): Promise<void> {
@@ -122,6 +135,7 @@ export async function endLeadSession(): Promise<void> {
       .catch(() => undefined);
   }
   store.delete(LEAD_COOKIE);
+  store.delete(LEAD_HINT_COOKIE);
 }
 
 /** Attaches everything the anonymous visitor did to the lead they became. */
