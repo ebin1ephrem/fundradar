@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { requireLead, savedOpportunityIds } from "@/lib/leads/identity";
+import { requireLead } from "@/lib/leads/identity";
 import { search } from "@/lib/search";
 import { recommendedFor } from "@/lib/queries/recommendations";
 import { computeLeadScore, MAX_SCORE } from "@/lib/leads/scoring";
@@ -13,9 +13,8 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   const lead = await requireLead();
 
-  const [recommended, savedIds, saved, interests, breakdown] = await Promise.all([
+  const [recommended, saved, interests, breakdown] = await Promise.all([
     recommendedFor(lead.id),
-    savedOpportunityIds(),
     prisma.savedOpportunity.findMany({
       where: { leadId: lead.id, status: { in: ["SAVED", "INTERESTED", "APPLIED"] } },
       include: { opportunity: { select: { id: true, applicationDeadline: true } } },
@@ -87,7 +86,7 @@ export default async function DashboardPage() {
         {recommended.hits.length ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {recommended.hits.map((hit) => (
-              <OpportunityCard key={hit.id} hit={hit} saved={savedIds.has(hit.id)} />
+              <OpportunityCard key={hit.id} hit={hit} />
             ))}
           </div>
         ) : (
@@ -138,7 +137,7 @@ export default async function DashboardPage() {
           </p>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {newest.map((hit) => (
-              <OpportunityCard key={hit.id} hit={hit} saved={savedIds.has(hit.id)} />
+              <OpportunityCard key={hit.id} hit={hit} />
             ))}
           </div>
         </section>

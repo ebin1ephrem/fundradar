@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { search } from "@/lib/search";
-import { parseFilters, activeFilterCount, buildQuery, type RawParams } from "@/lib/search/params";
+import { parseFilters, activeFilterCount, buildQuery, normalizeParams, type RawParams } from "@/lib/search/params";
 import { filterCategories, statesWithOpportunities } from "@/lib/queries/public";
 import { FilterPanel } from "@/components/public/filter-panel";
 import { OpportunityGrid } from "@/components/public/opportunity-card";
@@ -9,13 +9,12 @@ import { SearchBar } from "@/components/public/search-bar";
 import { SortSelect } from "@/components/public/sort-select";
 import { Pagination } from "@/components/public/pagination";
 import { LeadGateSubject } from "@/components/lead/gate-context";
-import { savedOpportunityIds } from "@/lib/leads/identity";
 import { brand, search as searchCopy, seo } from "@/content/copy";
 import { Reveal } from "@/components/public/motion/reveal";
 import { MobileFilterDrawer } from "@/components/public/mobile-filter-drawer";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = {
+const baseMetadata: Metadata = {
   title: seo.opportunities.title,
   description: seo.opportunities.description,
   alternates: { canonical: "/opportunities" },
@@ -28,7 +27,16 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = "force-dynamic";
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<RawParams>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  return Object.keys(params).length
+    ? { ...baseMetadata, robots: { index: false, follow: true } }
+    : baseMetadata;
+}
 
 const BASE = "/opportunities";
 
@@ -37,14 +45,18 @@ export default async function OpportunitiesPage({
 }: {
   searchParams: Promise<RawParams>;
 }) {
-  const params = await searchParams;
-  const filters = parseFilters(params);
+  const params = normalizeParams(await searchParams);
 
-  const [categories, states, savedIds] = await Promise.all([
+  const [categories, states] = await Promise.all([
     filterCategories(),
     statesWithOpportunities(),
-    savedOpportunityIds(),
   ]);
+  const filters = parseFilters(params);
+  const allowedCategories = new Set(categories.map((category) => category.slug));
+  filters.categorySlugs = (filters.categorySlugs ?? []).filter((slug) =>
+    allowedCategories.has(slug),
+  );
+  if (filters.state && !states.includes(filters.state)) filters.state = undefined;
 
   const [results, counts] = await Promise.all([
     search.search(filters),
@@ -132,6 +144,7 @@ export default async function OpportunitiesPage({
               <Link
                 key={quickFilter.label}
                 href={quickFilter.href}
+                rel="nofollow"
                 scroll={false}
                 aria-pressed={quickFilter.active}
                 className={cn(
@@ -183,6 +196,7 @@ export default async function OpportunitiesPage({
               {activeCount > 0 ? (
                 <Link
                   href={clearFiltersHref}
+                  rel="nofollow"
                   className="text-[12.5px] text-muted underline underline-offset-2 hover:text-ink"
                 >
                   {searchCopy.filters.clear}
@@ -224,7 +238,7 @@ export default async function OpportunitiesPage({
                 query={filters.q}
               />
             ) : (
-              <OpportunityGrid hits={results.hits} savedIds={savedIds} />
+              <OpportunityGrid hits={results.hits} />
             )}
 
             <Pagination

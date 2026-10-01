@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, ChevronDown, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { brand, nav } from "@/content/copy";
+import { useLeadGate } from "@/components/lead/gate-context";
 
 const OPPORTUNITY_LINKS = [
   { group: "Discover", href: "/opportunities", label: "All opportunities", description: "Everything currently on the Radar." },
@@ -17,7 +18,8 @@ const OPPORTUNITY_LINKS = [
   { group: "Explore", href: "/opportunities?provider=GOVERNMENT", label: "Government opportunities", description: "Calls and programmes from government organisations." },
 ] as const;
 
-export function SiteHeader({ signedIn, name }: { signedIn: boolean; name: string | null }) {
+export function SiteHeader() {
+  const { identified: signedIn, name } = useLeadGate();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const query = searchParams.toString();

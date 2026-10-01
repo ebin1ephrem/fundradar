@@ -11,7 +11,7 @@ import { BENEFITS, gateCopy } from "./copy";
 import { leadCapture } from "@/content/copy";
 
 export function LeadModal() {
-  const { isOpen, close, subject, reason } = useLeadGate();
+  const { isOpen, close, subject, reason, refreshSession } = useLeadGate();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const router = useRouter();
   const [done, setDone] = useState(false);
@@ -32,6 +32,7 @@ export function LeadModal() {
   useEffect(() => {
     if (!state.ok) return;
     setDone(true);
+    void refreshSession();
     // Re-render the server components so the unlocked content appears in place.
     router.refresh();
     const timer = setTimeout(() => {
@@ -39,7 +40,7 @@ export function LeadModal() {
       setDone(false);
     }, 2600);
     return () => clearTimeout(timer);
-  }, [state.ok, router, close]);
+  }, [state.ok, router, close, refreshSession]);
 
   const copy = gateCopy(subject);
 

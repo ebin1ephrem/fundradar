@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
-        userAgent: "GPTBot",
+        userAgent: ["GPTBot", "meta-externalagent", "SERankingBacklinksBot"],
         disallow: "/",
       },
       {

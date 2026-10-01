@@ -31,9 +31,34 @@ const Body = z.object({
  * number on the platform.
  */
 export async function POST(request: Request) {
+  const contentType = request.headers.get("content-type") ?? "";
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+  const fetchSite = request.headers.get("sec-fetch-site");
+  const origin = request.headers.get("origin");
+  const requestOrigin = new URL(request.url).origin;
+
+  if (
+    !contentType.toLowerCase().startsWith("application/json") ||
+    contentLength > 16_384 ||
+    fetchSite === "cross-site" ||
+    (origin !== null && origin !== requestOrigin)
+  ) {
+    return NextResponse.json(
+      { ok: false },
+      { status: 403, headers: { "Cache-Control": "private, no-store" } },
+    );
+  }
+
   let parsed;
   try {
-    parsed = Body.safeParse(await request.json());
+    const rawBody = await request.text();
+    if (rawBody.length > 16_384) {
+      return NextResponse.json(
+        { ok: false },
+        { status: 413, headers: { "Cache-Control": "private, no-store" } },
+      );
+    }
+    parsed = Body.safeParse(JSON.parse(rawBody));
   } catch {
     return NextResponse.json({ ok: false }, { status: 400 });
   }
@@ -51,47 +76,54 @@ export async function POST(request: Request) {
   const leadId = viewer.lead?.id ?? null;
   if (!visitorId && !leadId) return NextResponse.json({ ok: true });
 
-  await recordActivity({
-    type: event.type,
-    leadId,
-    visitorId,
-    opportunityId: event.opportunityId ?? null,
-    categoryId: event.categoryId ?? null,
-    description: event.query ? `Searched for "${event.query}"` : undefined,
-    metadata: { path: event.path ?? null, query: event.query ?? null },
-  });
-
-  await prisma.analyticsEvent
-    .create({
-      data: {
-        eventType: event.type,
-        visitorId,
-        leadId,
-        opportunityId: event.opportunityId ?? null,
-        categoryId: event.categoryId ?? null,
-        path: event.path ?? null,
-        metadata: { query: event.query ?? null },
-      },
-    })
-    .catch(() => undefined);
+  const writes: Promise<unknown>[] = [
+    recordActivity({
+      type: event.type,
+      leadId,
+      visitorId,
+      opportunityId: event.opportunityId ?? null,
+      categoryId: event.categoryId ?? null,
+      description: event.query ? `Searched for "${event.query}"` : undefined,
+      metadata: { path: event.path ?? null, query: event.query ?? null },
+    }),
+    prisma.analyticsEvent
+      .create({
+        data: {
+          eventType: event.type,
+          visitorId,
+          leadId,
+          opportunityId: event.opportunityId ?? null,
+          categoryId: event.categoryId ?? null,
+          path: event.path ?? null,
+          metadata: { query: event.query ?? null },
+        },
+      })
+      .catch(() => undefined),
+  ];
 
   if (event.type === "opportunity_view" && event.opportunityId) {
-    await prisma.opportunity
-      .update({
-        where: { id: event.opportunityId },
-        data: { viewCount: { increment: 1 } },
-      })
-      .catch(() => undefined);
+    writes.push(
+      prisma.opportunity
+        .update({
+          where: { id: event.opportunityId },
+          data: { viewCount: { increment: 1 } },
+        })
+        .catch(() => undefined),
+    );
   }
 
   if (event.type === "apply_clicked" && event.opportunityId) {
-    await prisma.opportunity
-      .update({
-        where: { id: event.opportunityId },
-        data: { applyClickCount: { increment: 1 } },
-      })
-      .catch(() => undefined);
+    writes.push(
+      prisma.opportunity
+        .update({
+          where: { id: event.opportunityId },
+          data: { applyClickCount: { increment: 1 } },
+        })
+        .catch(() => undefined),
+    );
   }
+
+  await Promise.all(writes);
 
   const interestIds = [
     ...(event.categoryIds ?? []),
@@ -108,5 +140,8 @@ export async function POST(request: Request) {
     await refreshLead(leadId);
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json(
+    { ok: true },
+    { headers: { "Cache-Control": "private, no-store" } },
+  );
 }

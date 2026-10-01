@@ -30,7 +30,7 @@ export function Pagination({
       </p>
       <div className="flex items-center gap-1.5">
         {page > 1 ? (
-          <Link href={href(page - 1)} rel="prev" className="btn btn-secondary btn-sm">
+          <Link href={href(page - 1)} rel="prev nofollow" className="btn btn-secondary btn-sm">
             Previous
           </Link>
         ) : null}
@@ -41,6 +41,7 @@ export function Pagination({
             ) : null}
             <Link
               href={href(n)}
+              rel="nofollow"
               aria-current={n === page ? "page" : undefined}
               className={cn(
                 "grid h-9 min-w-9 place-items-center rounded-[6px] border px-2 text-[13.5px] transition-colors duration-200",
@@ -54,7 +55,7 @@ export function Pagination({
           </span>
         ))}
         {page < pages ? (
-          <Link href={href(page + 1)} rel="next" className="btn btn-secondary btn-sm">
+          <Link href={href(page + 1)} rel="next nofollow" className="btn btn-secondary btn-sm">
             Next
           </Link>
         ) : null}
