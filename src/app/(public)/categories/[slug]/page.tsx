@@ -9,7 +9,6 @@ import { SearchBar } from "@/components/public/search-bar";
 import { Icon } from "@/components/admin/icon";
 import { CATEGORY_TYPE_LABEL } from "@/lib/validation/category";
 import { LeadGateSubject } from "@/components/lead/gate-context";
-import { TrackView } from "@/components/lead/tracker";
 import { brand, home, search as searchCopy, seo } from "@/content/copy";
 import { JsonLd, breadcrumbLd } from "@/components/public/structured-data";
 import { Reveal } from "@/components/public/motion/reveal";
@@ -124,8 +123,6 @@ export default async function CategoryPage({
           categoryIds: [category.id],
         }}
       />
-      <TrackView type="category_view" categoryId={category.id} />
-
       <div className="border-b border-line">
         <Reveal className="page-shell py-10 lg:py-16">
           <nav aria-label="Breadcrumb" className="mb-5">

@@ -21,7 +21,6 @@ import {
 } from "@/components/lead/unlock";
 import { LeadGateSubject } from "@/components/lead/gate-context";
 import { GatedContent } from "@/components/lead/gated-content";
-import { TrackView } from "@/components/lead/tracker";
 import { resolveGate } from "@/lib/gating";
 import { cn } from "@/lib/utils";
 import { brand, opportunity as oppCopy, seo } from "@/content/copy";
@@ -183,12 +182,6 @@ export default async function OpportunityPage({
           categoryIds: opportunity.categories.map((c) => c.categoryId),
         }}
       />
-      <TrackView
-        type="opportunity_view"
-        opportunityId={opportunity.id}
-        categoryIds={opportunity.categories.map((c) => c.categoryId)}
-      />
-
       <div className="border-b border-line bg-subtle">
         <div className="page-shell py-9 lg:py-12">
           <nav aria-label="Breadcrumb" className="mb-5">

@@ -95,4 +95,12 @@ const gateSource = readFileSync("src/components/lead/gate-context.tsx", "utf8");
 assert.match(gateSource, /fr:session-checked:v1/);
 assert.match(gateSource, /if \(!hasLeadHint\(\)\)/);
 
+const trackerSource = readFileSync("src/components/lead/tracker.tsx", "utf8");
+assert.doesNotMatch(trackerSource, /"opportunity_view"|"category_view"|"search"/);
+
+const trackingRouteSource = readFileSync("src/app/api/track/route.ts", "utf8");
+assert.doesNotMatch(trackingRouteSource, /"opportunity_view"|"category_view"|"search"/);
+assert.match(trackingRouteSource, /"unlock_requested"/);
+assert.match(trackingRouteSource, /"apply_clicked"/);
+
 console.log("Public cache serialization checks passed.");

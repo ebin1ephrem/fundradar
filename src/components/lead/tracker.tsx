@@ -1,13 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-
 export type TrackEvent = {
-  type: "opportunity_view" | "category_view" | "search" | "apply_clicked" | "unlock_requested";
+  type: "apply_clicked" | "unlock_requested";
   opportunityId?: string;
-  categoryId?: string;
-  categoryIds?: string[];
-  query?: string;
 };
 
 const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"];
@@ -36,39 +31,4 @@ export function track(event: TrackEvent): void {
     body: payload,
     keepalive: true,
   }).catch(() => undefined);
-}
-
-/**
- * Fires once per mount. Views are recorded from the browser because Next
- * prefetches links on hover, and counting those would inflate every number on
- * the platform.
- */
-export function TrackView(event: TrackEvent) {
-  const sent = useRef(false);
-
-  useEffect(() => {
-    if (sent.current) return;
-    sent.current = true;
-
-    // Count a page/event once per browser tab session. Back/forward navigation
-    // should not multiply Prisma writes for the same view.
-    const eventKey = [
-      "fr:tracked",
-      event.type,
-      event.opportunityId ?? "",
-      event.categoryId ?? "",
-      window.location.pathname,
-    ].join(":");
-    try {
-      if (sessionStorage.getItem(eventKey)) return;
-      sessionStorage.setItem(eventKey, "1");
-    } catch {
-      // Tracking still works when storage is unavailable.
-    }
-
-    track(event);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return null;
 }
